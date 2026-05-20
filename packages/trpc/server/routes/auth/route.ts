@@ -91,7 +91,7 @@ export const authRouter = router({
     })
     .input(getUserInfoInputType)
     .output(getUserInfoOutputType)
-    .mutation(async ({ input, ctx }) => {
+    .query(async ({ input, ctx }) => {
       const { id, email, fullName, role, profileImageUrl } = await userService.userInfoUsingId(
         ctx.user.id,
       );
