@@ -146,6 +146,8 @@ class UserService {
       });
 
       return {
+        message: "Logged in successfullu ",
+
         isVerified: true,
         token: accessToken,
         id: user.id,
@@ -193,6 +195,26 @@ class UserService {
       id: user.id,
       token: accessToken,
     };
+  }
+
+  public async userInfoUsingId(id: string) {
+    const user = await db
+      .select({
+        id: usersTable.id,
+        email: usersTable.email,
+        fullName: usersTable.fullName,
+        role: usersTable.role,
+        profileImageUrl: usersTable.profileImageUrl,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.id, id));
+    if (!user || user.length === 0 || !user[0]?.id) throw new Error("User not exist with this id");
+    return user[0];
+  }
+  public async verifyAndDecodeUserToken(token: string) {
+    const { id } = JwtUtils.verifyJwtToken(token);
+    const userInfo = await this.userInfoUsingId(id);
+    return { ...userInfo };
   }
 }
 

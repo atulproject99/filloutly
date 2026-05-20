@@ -7,7 +7,7 @@ class JwtUtils {
       expiresIn: "15m",
     });
   }
-  public static async verifyJwtToken(token: string): Promise<GenerateTokePayloadType> {
+  public static verifyJwtToken(token: string): GenerateTokePayloadType {
     try {
       const result = jwt.verify(token, env.ACCESS_TOKEN_SECRET) as GenerateTokePayloadType;
       return result;

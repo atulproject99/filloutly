@@ -8,8 +8,10 @@ import { createOpenApiExpressMiddleware, generateOpenApiDocument } from "trpc-to
 
 import { createContext, serverRouter } from "@repo/trpc/server";
 
+import cookieParser from "cookie-parser";
+import { rateLimit } from "express-rate-limit";
+import helmet from "helmet";
 import { env } from "./env";
-
 export const app = express();
 const openApiDocument = generateOpenApiDocument(serverRouter, {
   title: "Streamyst OpenAPI",
@@ -19,11 +21,33 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 
 app.use(
   cors({
-    origin: "http:localhost:3000",
+    origin: "http://localhost:3000",
+    credentials: true,
   }),
 );
 
 app.use(express.json());
+
+app.use(cookieParser());
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  }),
+);
+
+const globalLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    message: "Too many requests. Please try again later.",
+  },
+  ipv6Subnet: 56,
+});
+
+app.use(globalLimiter);
 
 app.get("/", (req, res) => {
   return res.json({ message: "Streamyst is up and running..." });
