@@ -1,9 +1,54 @@
 {
-  "id": "f96d916b-3f19-49d9-bd0b-c3a243153515",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "597d0d9e-19d8-41db-86c9-cbbe531da227",
+  "prevId": "76dbdbae-1574-412e-9c69-a1354b706cf6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.email-verifications": {
+      "name": "email-verifications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "otp": {
+          "name": "otp",
+          "type": "varchar(6)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.users": {
       "name": "users",
       "schema": "",
@@ -45,7 +90,7 @@
           "type": "roles",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "'creator'"
         },
         "salt": {
