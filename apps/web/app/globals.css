@@ -121,3 +121,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)];
+  }
+  
+  .glass-card {
+    @apply bg-black/60 backdrop-blur-md border border-white/5 shadow-2xl;
+  }
+
+  .crimson-glow {
+    @apply shadow-[0_0_40px_rgba(220,38,38,0.3)];
+  }
+
+  .crimson-text-glow {
+    text-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
+  }
+
+  .matte-black {
+    @apply bg-[#0a0a0a];
+  }
+
+  .ambient-glow {
+    background: radial-gradient(circle at 50% 50%, rgba(220, 38, 38, 0.15) 0%, transparent 60%);
+  }
+}
