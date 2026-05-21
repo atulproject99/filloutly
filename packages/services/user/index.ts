@@ -95,8 +95,9 @@ class UserService {
   public async createUserWithEmailPassword(payload: CreateUserWithEmailPasswordInput) {
     const { fullName, email, password } =
       await createUserWithEmailPasswordInput.parseAsync(payload);
-    const existingUser = await this.getUserWithEmail(email);
-    if (existingUser) throw new Error("User already exist with email");
+    const existingUsers = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    if (existingUsers && existingUsers.length > 0 && existingUsers[0]?.id)
+      throw new Error("User already exist with email");
     /// Password hashing
     const salt = crypto.randomBytes(32).toString();
     const hashedPassword = this.hashPassword(salt, password);
@@ -119,9 +120,11 @@ class UserService {
   private async sendOtpEmail(email: string) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const emailVerificationData = await this.updateOtpForEmail(email, otp);
+    // await EmailService.sendEmailForOTP(email, otp);
     return emailVerificationData.id;
   }
   public async signUserWithEmailPassword(payload: SignUserWithEmailPasswordInput) {
+    console.log("Sign user password service call...");
     const { email, password } = await signUserWithEmailPasswordInput.parseAsync(payload);
     const user = await this.getUserWithEmail(email);
     if (!user.salt) throw new Error("Invalid salt");

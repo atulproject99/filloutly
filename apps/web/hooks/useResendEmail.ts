@@ -8,5 +8,5 @@ export default function useResendEmail() {
     isPending: isLoading,
   } = trpc.auth.resendOtpEmail.useMutation();
 
-  return [resendEmailAsync, data, error, isLoading];
+  return { resendEmailAsync, data, error, isLoading };
 }

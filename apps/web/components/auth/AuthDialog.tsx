@@ -1,15 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "~/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
-import { Button } from "~/components/ui/button";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "~/components/ui/input-otp";
 import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "~/components/ui/input-otp";
+import useSignIn from "~/hooks/useSignIn";
+import useSignUp from "~/hooks/useSignUp";
+import useVerifyEmail from "~/hooks/useVerifyEmail";
+import useResendEmail from "~/hooks/useResendEmail";
+
+const successToastStyle = { style: { background: '#16a34a', color: '#fff', border: 'none' } };
+const errorToastStyle = { style: { background: '#dc2626', color: '#fff', border: 'none' } };
 
 // Schemas
 const loginSchema = z.object({
@@ -19,7 +40,7 @@ const loginSchema = z.object({
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Please enter a valid email address."),
+  email: z.email("Please enter a valid email address."),
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
@@ -37,8 +58,28 @@ interface AuthDialogProps {
 
 export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: AuthDialogProps) {
   const [view, setView] = useState<ViewState>(initialView);
-  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
   const [countdown, setCountdown] = useState(30);
+
+  const {
+    signInUserWithEmailPasswordAsync,
+    isLoading: isLoadingForSignIn,
+  } = useSignIn();
+
+  const {
+    createUserWithEmailPasswordAsync: signUpUserWithEmailPasswordAsync,
+    isLoading: isLoadingForSignUp,
+  } = useSignUp();
+
+  const {
+    verifyEmailAsync,
+    isLoading: isLoadingForVerify,
+  } = useVerifyEmail();
+
+  const {
+    resendEmailAsync,
+    isLoading: isLoadingForResend,
+  } = useResendEmail();
 
   // Reset view when dialog opens
   useEffect(() => {
@@ -73,39 +114,79 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
   });
 
   const onLoginSubmit = async (_values: z.infer<typeof loginSchema>) => {
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    setView("otp");
+    try {
+      const response = await signInUserWithEmailPasswordAsync({
+        email: _values.email,
+        password: _values.password,
+      });
+
+      if (response?.message) {
+        toast.success(response.message, successToastStyle);
+        setEmail(_values.email);
+        if (!response.isVerified) {
+          setView("otp");
+        } else {
+          onOpenChange(false);
+        }
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "An error occurred during login", errorToastStyle);
+    }
   };
 
   const onRegisterSubmit = async (_values: z.infer<typeof registerSchema>) => {
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    setView("otp");
+    try {
+      const response = await signUpUserWithEmailPasswordAsync({
+        fullName: _values.name,
+        email: _values.email,
+        password: _values.password,
+      });
+      if (response?.message) {
+        toast.success(response.message, successToastStyle);
+        setEmail(_values.email);
+        setView("otp");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "An error occurred during registration", errorToastStyle);
+    }
   };
 
   const onOtpSubmit = async (_values: z.infer<typeof otpSchema>) => {
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    onOpenChange(false); // Close dialog on success
+    try {
+      const response = await verifyEmailAsync({
+        email: email,
+        otp: _values.pin,
+      });
+      if (response?.message) {
+        toast.success(response.message, successToastStyle);
+        onOpenChange(false); // Close dialog on success
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Invalid OTP", errorToastStyle);
+    }
   };
 
-  const handleResend = () => {
-    setCountdown(30);
-    // Simulate resend logic here
+  const handleResend = async () => {
+    if (!email) {
+      toast.error("Email not found. Please try logging in again.", errorToastStyle);
+      return;
+    }
+    try {
+      const response = await resendEmailAsync({ email });
+      if (response?.message) {
+        toast.success(response.message, successToastStyle);
+        setCountdown(30);
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to resend OTP", errorToastStyle);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] bg-[#0a0a0a] border border-white/10 text-white shadow-2xl glass-card">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(220,38,38,0.15)_0%,transparent_70%)] pointer-events-none" />
-        
+
         <DialogHeader className="relative z-10">
           <div className="mx-auto w-12 h-12 rounded-xl bg-red-600/20 flex items-center justify-center mb-4 border border-red-500/30 crimson-glow">
             <div className="w-6 h-6 bg-red-500 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.8)]"></div>
@@ -133,7 +214,11 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                     <FormItem>
                       <FormLabel className="text-neutral-300">Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="you@example.com" {...field} className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11" />
+                        <Input
+                          placeholder="you@example.com"
+                          {...field}
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                        />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -146,18 +231,31 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                     <FormItem>
                       <FormLabel className="text-neutral-300">Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11" />
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          {...field}
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                        />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isLoading} className="w-full h-11 bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] mt-6 font-semibold">
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Access Vault"}
+                <Button
+                  type="submit"
+                  disabled={isLoadingForSignIn}
+                  className="w-full h-11 bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] mt-6 font-semibold"
+                >
+                  {isLoadingForSignIn ? <Loader2 className="w-4 h-4 animate-spin" /> : "Login"}
                 </Button>
                 <div className="text-center text-sm text-neutral-400 mt-4">
                   Don&apos;t have an account?{" "}
-                  <button type="button" onClick={() => setView("register")} className="text-red-400 hover:text-red-300 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setView("register")}
+                    className="text-red-400 hover:text-red-300 font-medium"
+                  >
                     Register
                   </button>
                 </div>
@@ -175,7 +273,11 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                     <FormItem>
                       <FormLabel className="text-neutral-300">Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11" />
+                        <Input
+                          placeholder="John Doe"
+                          {...field}
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                        />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -188,7 +290,11 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                     <FormItem>
                       <FormLabel className="text-neutral-300">Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="you@example.com" {...field} className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11" />
+                        <Input
+                          placeholder="you@example.com"
+                          {...field}
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                        />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -201,18 +307,35 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                     <FormItem>
                       <FormLabel className="text-neutral-300">Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11" />
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          {...field}
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                        />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isLoading} className="w-full h-11 bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] mt-6 font-semibold">
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Account"}
+                <Button
+                  type="submit"
+                  disabled={isLoadingForSignUp}
+                  className="w-full h-11 bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] mt-6 font-semibold"
+                >
+                  {isLoadingForSignUp ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
                 <div className="text-center text-sm text-neutral-400 mt-4">
                   Already have an account?{" "}
-                  <button type="button" onClick={() => setView("login")} className="text-red-400 hover:text-red-300 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setView("login")}
+                    className="text-red-400 hover:text-red-300 font-medium"
+                  >
                     Log in
                   </button>
                 </div>
@@ -222,7 +345,10 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
 
           {view === "otp" && (
             <Form {...otpForm}>
-              <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-6 flex flex-col items-center">
+              <form
+                onSubmit={otpForm.handleSubmit(onOtpSubmit)}
+                className="space-y-6 flex flex-col items-center"
+              >
                 <FormField
                   control={otpForm.control}
                   name="pin"
@@ -231,12 +357,30 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                       <FormControl>
                         <InputOTP maxLength={6} {...field} className="gap-2">
                           <InputOTPGroup className="gap-2">
-                            <InputOTPSlot index={0} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={1} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={2} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={3} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={4} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={5} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
+                            <InputOTPSlot
+                              index={0}
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                            />
+                            <InputOTPSlot
+                              index={1}
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                            />
+                            <InputOTPSlot
+                              index={2}
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                            />
+                            <InputOTPSlot
+                              index={3}
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                            />
+                            <InputOTPSlot
+                              index={4}
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                            />
+                            <InputOTPSlot
+                              index={5}
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                            />
                           </InputOTPGroup>
                         </InputOTP>
                       </FormControl>
@@ -244,15 +388,28 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isLoading} className="w-full h-11 bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] font-semibold">
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Identity"}
+                <Button
+                  type="submit"
+                  disabled={isLoadingForVerify}
+                  className="w-full h-11 bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] font-semibold"
+                >
+                  {isLoadingForVerify ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Verify Identity"
+                  )}
                 </Button>
                 <div className="text-center text-sm text-neutral-400 w-full">
                   {countdown > 0 ? (
                     <span>Resend code in {countdown}s</span>
                   ) : (
-                    <button type="button" onClick={handleResend} className="text-red-400 hover:text-red-300 font-medium">
-                      Resend Code
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      disabled={isLoadingForResend}
+                      className="text-red-400 hover:text-red-300 font-medium disabled:opacity-50"
+                    >
+                      {isLoadingForResend ? "Resending..." : "Resend Code"}
                     </button>
                   )}
                 </div>

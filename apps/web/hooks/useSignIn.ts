@@ -8,5 +8,5 @@ export default function useSignIn() {
     isPending: isLoading,
   } = trpc.auth.signUserWithEmailPassword.useMutation();
 
-  return [signInUserWithEmailPasswordAsync, data, error, isLoading];
+  return { signInUserWithEmailPasswordAsync, data, error, isLoading };
 }

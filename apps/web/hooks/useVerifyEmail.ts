@@ -8,5 +8,5 @@ export default function useVerifyEmail() {
     isPending: isLoading,
   } = trpc.auth.verifyEmail.useMutation();
 
-  return [verifyEmailAsync, data, error, isLoading];
+  return { verifyEmailAsync, data, error, isLoading };
 }

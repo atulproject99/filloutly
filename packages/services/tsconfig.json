@@ -2,7 +2,4 @@
   "extends": [
     "@repo/typescript-config/node.json"
   ],
-  "compilerOptions": {
-    "ignoreDeprecations": "6.0"
-  }
 }

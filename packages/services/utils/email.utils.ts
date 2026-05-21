@@ -1,9 +1,9 @@
 import { Resend } from "resend";
 import { env } from "../env";
 class EmailService {
-  private resend = new Resend(env.RESEND_API_KEY);
+  private static resend = new Resend(env.RESEND_API_KEY);
 
-  public async sendEmailForOTP(email: string, otp: string) {
+  public static async sendEmailForOTP(email: string, otp: string) {
     const response = await this.resend.emails.send({
       from: "Filloutly <onboarding@resend.dev>",
       to: email,
