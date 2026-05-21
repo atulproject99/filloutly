@@ -22,6 +22,7 @@ export const signUserWithEmailPasswordOutputType = z.object({
   id: z.string().describe("Id of user"),
   token: z.string().describe("Access token of user"),
   email: z.email().describe("email of user"),
+  role: z.enum(["creator", "admin"]).optional().describe("Role of user"),
 });
 
 export const verifyEmailInputType = z.object({
@@ -33,6 +34,7 @@ export const verifyEmailOutputType = z.object({
   message: z.string().describe("Message from server "),
   id: z.string().describe("Id of user"),
   token: z.string().default("").describe("Access token of user"),
+  role: z.enum(["creator", "admin"]).optional().describe("Role of user"),
 });
 
 export const resendEmailInputType = z.object({

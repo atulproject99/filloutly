@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -60,6 +61,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
   const [view, setView] = useState<ViewState>(initialView);
   const [email, setEmail] = useState("");
   const [countdown, setCountdown] = useState(30);
+  const router = useRouter();
 
   const {
     signInUserWithEmailPasswordAsync,
@@ -127,6 +129,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
           setView("otp");
         } else {
           onOpenChange(false);
+          router.push(response.role === "admin" ? "/admin" : "/dashboard");
         }
       }
     } catch (error: any) {
@@ -160,6 +163,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
       if (response?.message) {
         toast.success(response.message, successToastStyle);
         onOpenChange(false); // Close dialog on success
+        router.push(response.role === "admin" ? "/admin" : "/dashboard");
       }
     } catch (error: any) {
       toast.error(error?.message || "Invalid OTP", errorToastStyle);

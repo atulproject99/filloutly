@@ -140,6 +140,7 @@ class UserService {
         token: "",
         id: user.id,
         email: user.email,
+        role: user.role as "creator" | "admin",
       };
     } else {
       const accessToken = JwtUtils.generateJwtToken({
@@ -149,12 +150,13 @@ class UserService {
       });
 
       return {
-        message: "Logged in successfullu ",
+        message: "Logged in successfully",
 
         isVerified: true,
         token: accessToken,
         id: user.id,
         email: user.email,
+        role: user.role as "creator" | "admin",
       };
     }
   }
@@ -197,6 +199,7 @@ class UserService {
       message: "Email verified successfully",
       id: user.id,
       token: accessToken,
+      role: user.role as "creator" | "admin",
     };
   }
 
