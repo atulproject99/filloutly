@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import "./globals.css";
 import { GlobalProviders } from "~/providers/global";
+import "./globals.css";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -14,7 +14,8 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Filloutly - Cinematic Form Builder",
-  description: "Build immersive forms inspired by movies, anime, hacker culture, startups and creator communities.",
+  description:
+    "Build immersive forms inspired by movies, anime, hacker culture, startups and creator communities.",
 };
 
 export default function RootLayout({
