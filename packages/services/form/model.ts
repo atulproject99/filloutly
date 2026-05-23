@@ -39,6 +39,13 @@ export const updateFormInput = z.object({
   title: z.string().min(3).describe("Form title").optional(),
   description: z.string().min(3).describe("Form description").optional(),
   theme: z.enum(FormTheme).optional(),
+  slug: z
+    .string()
+    .describe("Slug for form")
+    .min(3)
+    .max(120)
+    .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers and hyphens")
+    .optional(),
   collectEmail: z
     .boolean()
     .describe("Just confirm from user need to take email for fill this form or not")
