@@ -8,6 +8,8 @@ import {
     deleteFormOutputType,
     getFormsInputType,
     getFormsOutputType,
+    updateFormInputType,
+    updateFormOutputType,
 } from "./model";
 
 const TAGS = ["Form"];
@@ -30,6 +32,26 @@ export const formRouter = router({
         theme: input.theme as any,
         collectEmail: input.collectEmail ?? false,
         creatorId: ctx.user.id,
+      });
+      return result;
+    }),
+
+  updateForm: authProcedure
+    .meta({
+      openapi: {
+        method: "PUT",
+        path: getPath("/update"),
+        tags: TAGS,
+      },
+    })
+    .input(updateFormInputType)
+    .output(updateFormOutputType)
+    .mutation(async ({ input }) => {
+      const result = await formService.updateForm({
+        ...input,
+        theme: input.theme as any,
+        visibility: input.visibility as any,
+        status: input.status as any,
       });
       return result;
     }),

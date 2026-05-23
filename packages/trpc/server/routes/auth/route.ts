@@ -46,7 +46,7 @@ export const authRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { message, isVerified, token, email, id } =
         await userService.signUserWithEmailPassword(input);
-      if (!token) {
+      if (token) {
         setAuthenticationCookie(ctx, token);
       }
       return { message, isVerified, token, email, id };

@@ -1,13 +1,13 @@
 import {
-    boolean,
-    doublePrecision,
-    jsonb,
-    pgEnum,
-    pgTable,
-    text,
-    timestamp,
-    uuid,
-    varchar,
+  boolean,
+  doublePrecision,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 export const fieldTypeEnum = pgEnum("field_type", [

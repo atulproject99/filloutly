@@ -22,6 +22,13 @@
       "when": 1779299453542,
       "tag": "0002_typical_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1779519282526,
+      "tag": "0003_calm_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }

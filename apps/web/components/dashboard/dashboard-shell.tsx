@@ -1,11 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
+import useUser from "~/hooks/useUser";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const router = useRouter();
+  const [user, error, isLoading, isError] = useUser();
+
+  useEffect(() => {
+    if (!isLoading && (isError || !user)) {
+      router.push("/");
+    }
+  }, [isLoading, isError, user, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen bg-[#0a0a0a] text-white items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-white/60 text-sm">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Prevent flashing the dashboard content while redirecting
+  if (isError || !user) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden relative lg:gap-4">

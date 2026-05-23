@@ -7,12 +7,12 @@ export enum FormTheme {
   STARTUP_MINIMAL = "startup-minimal",
 }
 
-export enum FormVisiblityEnum {
+export enum FormStatusEnum {
   DRAFT = "draft",
   PUBLISHED = "published",
   ARCHIVED = "archived",
 }
-export enum FormStatusEnum {
+export enum FormVisiblityEnum {
   PUBLIC = "public",
   UNLISTED = "unlisted",
 }

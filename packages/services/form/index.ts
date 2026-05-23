@@ -9,6 +9,8 @@ import {
   GetAllFormsInput,
   getFormByIdInput,
   GetFormByIdInput,
+  updateFormInput,
+  UpdateFormInput,
 } from "./model";
 
 class FormService {
@@ -48,8 +50,34 @@ class FormService {
     };
   }
 
-  public async updateForm() {}
+  public async updateForm(payload: UpdateFormInput) {
+    const { formId, ...updateData } = await updateFormInput.parseAsync(payload);
 
+    if (updateData.slug) {
+      const existingForm = await db
+        .select()
+        .from(formsTable)
+        .where(eq(formsTable.slug, updateData.slug));
+      if (existingForm && existingForm.length > 0 && existingForm[0]?.id !== formId) {
+        throw new Error("Form with this slug already exists");
+      }
+    }
+
+    const updatedForm = await db
+      .update(formsTable)
+      .set(updateData)
+      .where(eq(formsTable.id, formId))
+      .returning({ id: formsTable.id });
+
+    if (!updatedForm || updatedForm.length === 0 || !updatedForm[0]?.id) {
+      throw new Error("Form not found or could not be updated");
+    }
+
+    return {
+      message: "Form updated successfully",
+      id: updatedForm[0].id,
+    };
+  }
   public async deleteForm(payload: DeleteFormInput) {
     const { id } = await deleteFormInput.parseAsync(payload);
 
