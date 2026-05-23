@@ -5,6 +5,8 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string(),
   ACCESS_TOKEN_SECRET: z.string(),
   ACCESS_TOKEN_EXPIRY: z.string(),
+  REFRESH_TOKEN_SECRET: z.string(),
+  REFRESH_TOKEN_EXPIRY: z.string().default("7d"),
 });
 
 function createEnv(env: NodeJS.ProcessEnv) {

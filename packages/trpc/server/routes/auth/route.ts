@@ -1,14 +1,23 @@
 import { userService } from "../../services";
 import { authProcedure, publicProcedure, router } from "../../trpc";
-import { setAuthenticationCookie } from "../../utils/cookie";
+import {
+  deleteAuthenticationCookie,
+  deleteRefreshTokenCookie,
+  setAuthenticationCookie,
+  setRefreshTokenCookie,
+} from "../../utils/cookie";
 import { generatePath } from "../../utils/path-generator";
 import {
   createUserWithEmailPasswordInputType,
   createUserWithEmailPasswordOutputType,
   getUserInfoInputType,
   getUserInfoOutputType,
+  refreshTokenInputType,
+  refreshTokenOutputType,
   resendEmailInputType,
   resendEmailOutputType,
+  signOutInputType,
+  signOutOutputType,
   signUserWithEmailPasswordInputType,
   signUserWithEmailPasswordOutputType,
   verifyEmailInputType,
@@ -33,6 +42,7 @@ export const authRouter = router({
       const { message, email } = await userService.createUserWithEmailPassword(input);
       return { message, email };
     }),
+
   signUserWithEmailPassword: publicProcedure
     .meta({
       openapi: {
@@ -44,13 +54,17 @@ export const authRouter = router({
     .input(signUserWithEmailPasswordInputType)
     .output(signUserWithEmailPasswordOutputType)
     .mutation(async ({ input, ctx }) => {
-      const { message, isVerified, token, email, id } =
+      const { message, isVerified, token, refreshToken, email, id } =
         await userService.signUserWithEmailPassword(input);
       if (token) {
         setAuthenticationCookie(ctx, token);
       }
+      if (refreshToken) {
+        setRefreshTokenCookie(ctx, refreshToken);
+      }
       return { message, isVerified, token, email, id };
     }),
+
   verifyEmail: publicProcedure
     .meta({
       openapi: {
@@ -62,10 +76,12 @@ export const authRouter = router({
     .input(verifyEmailInputType)
     .output(verifyEmailOutputType)
     .mutation(async ({ input, ctx }) => {
-      const { message, token, id } = await userService.verifyEmail(input);
+      const { message, token, refreshToken, id } = await userService.verifyEmail(input);
       setAuthenticationCookie(ctx, token);
+      setRefreshTokenCookie(ctx, refreshToken);
       return { message, token, id };
     }),
+
   resendOtpEmail: publicProcedure
     .meta({
       openapi: {
@@ -79,6 +95,49 @@ export const authRouter = router({
     .mutation(async ({ input }) => {
       const { message, email } = await userService.resendEmail(input);
       return { message, email };
+    }),
+
+  // ── Refresh Token ───────────────────────────────────────────────────────────
+  refreshToken: publicProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/refreshToken"),
+        tags: TAGS,
+      },
+    })
+    .input(refreshTokenInputType)
+    .output(refreshTokenOutputType)
+    .mutation(async ({ ctx }) => {
+      const storedRefreshToken = ctx.getCookie("refresh-token");
+      if (!storedRefreshToken) {
+        const { TRPCError } = await import("@trpc/server");
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "No refresh token" });
+      }
+      const { accessToken, refreshToken, id } =
+        await userService.refreshUserToken(storedRefreshToken);
+      // Rotate both cookies
+      setAuthenticationCookie(ctx, accessToken);
+      setRefreshTokenCookie(ctx, refreshToken);
+      return { message: "Token refreshed successfully", id };
+    }),
+
+  // ── Sign Out ────────────────────────────────────────────────────────────────
+  signOut: authProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/signOut"),
+        tags: TAGS,
+      },
+    })
+    .input(signOutInputType)
+    .output(signOutOutputType)
+    .mutation(async ({ ctx }) => {
+      await userService.revokeRefreshToken(ctx.user.id);
+      deleteAuthenticationCookie(ctx);
+      deleteRefreshTokenCookie(ctx);
+      return { message: "Signed out successfully" };
     }),
 
   getUserInfo: authProcedure

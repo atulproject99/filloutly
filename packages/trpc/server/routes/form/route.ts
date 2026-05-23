@@ -10,6 +10,16 @@ import {
     getFormsOutputType,
     updateFormInputType,
     updateFormOutputType,
+    addFieldInputType,
+    addFieldOutputType,
+    updateFieldInputType,
+    updateFieldOutputType,
+    deleteFieldInputType,
+    deleteFieldOutputType,
+    reorderFieldsInputType,
+    reorderFieldsOutputType,
+    getFormByIdInput,
+    formOutputType,
 } from "./model";
 
 const TAGS = ["Form"];
@@ -84,5 +94,76 @@ export const formRouter = router({
     .query(async ({ ctx }) => {
       const forms = await formService.getForms({ id: ctx.user.id });
       return forms;
+    }),
+
+  getFormById: authProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/{id}"),
+        tags: TAGS,
+      },
+    })
+    .input(getFormByIdInput)
+    .output(formOutputType)
+    .query(async ({ input }) => {
+      const form = await formService.getFormById(input);
+      return form as any;
+    }),
+
+  addField: authProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/field"),
+        tags: TAGS,
+      },
+    })
+    .input(addFieldInputType)
+    .output(addFieldOutputType)
+    .mutation(async ({ input }) => {
+      return await formService.addField(input as any);
+    }),
+
+  updateField: authProcedure
+    .meta({
+      openapi: {
+        method: "PUT",
+        path: getPath("/field"),
+        tags: TAGS,
+      },
+    })
+    .input(updateFieldInputType)
+    .output(updateFieldOutputType)
+    .mutation(async ({ input }) => {
+      return await formService.updateField(input);
+    }),
+
+  deleteField: authProcedure
+    .meta({
+      openapi: {
+        method: "DELETE",
+        path: getPath("/field"),
+        tags: TAGS,
+      },
+    })
+    .input(deleteFieldInputType)
+    .output(deleteFieldOutputType)
+    .mutation(async ({ input }) => {
+      return await formService.deleteField(input);
+    }),
+
+  reorderFields: authProcedure
+    .meta({
+      openapi: {
+        method: "PUT",
+        path: getPath("/field/reorder"),
+        tags: TAGS,
+      },
+    })
+    .input(reorderFieldsInputType)
+    .output(reorderFieldsOutputType)
+    .mutation(async ({ input }) => {
+      return await formService.reorderFields(input);
     }),
 });

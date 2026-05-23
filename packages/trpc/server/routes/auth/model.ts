@@ -34,6 +34,7 @@ export const verifyEmailOutputType = z.object({
   message: z.string().describe("Message from server "),
   id: z.string().describe("Id of user"),
   token: z.string().default("").describe("Access token of user"),
+  refreshToken: z.string().default("").describe("Refresh token of user"),
   role: z.enum(["creator", "admin"]).optional().describe("Role of user"),
 });
 
@@ -53,4 +54,19 @@ export const getUserInfoOutputType = z.object({
   role: z.enum(["creator", "admin"]).describe("Role of user"),
   id: z.string().describe("Id of user"),
   profileImageUrl: z.string().optional().describe("Profile image url"),
+});
+
+// ── Refresh Token ────────────────────────────────────────────────────────────
+export const refreshTokenInputType = z.undefined();
+
+export const refreshTokenOutputType = z.object({
+  message: z.string().describe("Message from server"),
+  id: z.string().describe("Id of user"),
+});
+
+// ── Sign Out ─────────────────────────────────────────────────────────────────
+export const signOutInputType = z.undefined();
+
+export const signOutOutputType = z.object({
+  message: z.string().describe("Message from server"),
 });

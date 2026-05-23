@@ -1,14 +1,23 @@
 import { formsTable } from "@repo/database/models/form";
+import { formFieldsTable } from "@repo/database/models/form_field";
 import { db, eq } from "../../database/index";
 import {
+  createFieldInput,
+  CreateFieldInput,
   createFormInput,
   CreateFormInput,
+  deleteFieldInput,
+  DeleteFieldInput,
   deleteFormInput,
   DeleteFormInput,
   getAllFormsInput,
   GetAllFormsInput,
   getFormByIdInput,
   GetFormByIdInput,
+  reorderFieldsInput,
+  ReorderFieldsInput,
+  updateFieldInput,
+  UpdateFieldInput,
   updateFormInput,
   UpdateFormInput,
 } from "./model";
@@ -105,7 +114,14 @@ class FormService {
       throw new Error("Form not found");
     }
 
-    return form[0];
+    const fields = await db.select().from(formFieldsTable).where(eq(formFieldsTable.formId, id));
+
+    fields.sort((a, b) => a.order - b.order);
+
+    return {
+      ...form[0],
+      fields,
+    };
   }
 
   public async getForms(payload?: GetAllFormsInput) {
@@ -120,10 +136,104 @@ class FormService {
   }
 
   /// Field se related
-  public async addField() {}
-  public async updateField() {}
-  public async deleteField() {}
-  public async reorderField() {}
+  public async addField(payload: CreateFieldInput) {
+    const data = await createFieldInput.parseAsync(payload);
+
+    // Determine order: get max order for this form
+    const existingFields = await db
+      .select({ order: formFieldsTable.order })
+      .from(formFieldsTable)
+      .where(eq(formFieldsTable.formId, data.formId));
+
+    const maxOrder =
+      existingFields.length > 0 ? Math.max(...existingFields.map((f) => f.order)) : 0;
+
+    const newOrder = maxOrder + 1;
+
+    const labelKey = `${data.type}_${Date.now()}`;
+
+    const newField = await db
+      .insert(formFieldsTable)
+      .values({
+        formId: data.formId,
+        type: data.type as any,
+        label: data.label,
+        labelKey,
+        placeholder: data.placeholder,
+        helperText: data.helperText,
+        required: data.required,
+        options: data.options,
+        validations: data.validations,
+        order: newOrder,
+      })
+      .returning();
+
+    if (!newField || newField.length === 0) {
+      throw new Error("Something went wrong while adding the field");
+    }
+
+    return {
+      message: "Field added successfully",
+      field: newField[0],
+    };
+  }
+
+  public async updateField(payload: UpdateFieldInput) {
+    const { fieldId, ...updateData } = await updateFieldInput.parseAsync(payload);
+
+    const updatedField = await db
+      .update(formFieldsTable)
+      .set(updateData)
+      .where(eq(formFieldsTable.id, fieldId))
+      .returning();
+
+    if (!updatedField || updatedField.length === 0) {
+      throw new Error("Field not found or could not be updated");
+    }
+
+    return {
+      message: "Field updated successfully",
+      field: updatedField[0],
+    };
+  }
+
+  public async deleteField(payload: DeleteFieldInput) {
+    const { fieldId } = await deleteFieldInput.parseAsync(payload);
+
+    const deletedField = await db
+      .delete(formFieldsTable)
+      .where(eq(formFieldsTable.id, fieldId))
+      .returning({ id: formFieldsTable.id });
+
+    if (!deletedField || deletedField.length === 0) {
+      throw new Error("Field not found or could not be deleted");
+    }
+
+    return {
+      message: "Field deleted successfully",
+      id: deletedField[0]?.id as string,
+    };
+  }
+
+  public async reorderFields(payload: ReorderFieldsInput) {
+    const { formId, fieldIds } = await reorderFieldsInput.parseAsync(payload);
+
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < fieldIds.length; i++) {
+        const id = fieldIds[i];
+        if (id) {
+          await tx
+            .update(formFieldsTable)
+            .set({ order: i + 1 })
+            .where(eq(formFieldsTable.id, id));
+        }
+      }
+    });
+
+    return {
+      message: "Fields reordered successfully",
+    };
+  }
 }
 
 export default FormService;

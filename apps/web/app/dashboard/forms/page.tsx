@@ -2,7 +2,8 @@
 
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { Plus, MoreHorizontal, Edit, Globe, Archive, Trash2 } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Globe, Archive, Trash2, Blocks } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import slugify from "slugify";
 import { toast } from "sonner";
@@ -510,9 +511,15 @@ export default function MyFormsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="glass-panel border-white/10 bg-black/90 text-white">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/forms/${form.id}/builder`} className="cursor-pointer hover:bg-white/10 focus:bg-white/10 w-full flex items-center">
+                            <Blocks className="mr-2 h-4 w-4 text-blue-400" />
+                            Build Form
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="cursor-pointer hover:bg-white/10 focus:bg-white/10" onClick={() => openEditDialog(form)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit Form
+                          Settings
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-white/10" />
                         {form.status !== "published" && (

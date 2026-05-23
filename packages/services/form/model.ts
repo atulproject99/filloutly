@@ -81,3 +81,49 @@ export type DeleteFormInput = z.infer<typeof deleteFormInput>;
 export type GetFormByIdInput = z.infer<typeof getFormByIdInput>;
 
 export type GetAllFormsInput = z.infer<typeof getAllFormsInput>;
+
+export const createFieldInput = z.object({
+  formId: z.string().uuid(),
+  type: z.enum([
+    "short_text",
+    "long_text",
+    "email",
+    "number",
+    "single_select",
+    "multi_select",
+    "dropdown",
+    "checkbox",
+    "rating",
+    "date",
+  ]),
+  label: z.string().min(1),
+  placeholder: z.string().optional(),
+  helperText: z.string().optional(),
+  required: z.boolean().default(false),
+  options: z.any().optional(), // Can refine this later if needed
+  validations: z.any().optional(),
+});
+
+export const updateFieldInput = z.object({
+  fieldId: z.string().uuid(),
+  label: z.string().min(1).optional(),
+  placeholder: z.string().optional(),
+  helperText: z.string().optional(),
+  required: z.boolean().optional(),
+  options: z.any().optional(),
+  validations: z.any().optional(),
+});
+
+export const deleteFieldInput = z.object({
+  fieldId: z.string().uuid(),
+});
+
+export const reorderFieldsInput = z.object({
+  formId: z.string().uuid(),
+  fieldIds: z.array(z.string().uuid()).describe("Array of field IDs in the new order"),
+});
+
+export type CreateFieldInput = z.infer<typeof createFieldInput>;
+export type UpdateFieldInput = z.infer<typeof updateFieldInput>;
+export type DeleteFieldInput = z.infer<typeof deleteFieldInput>;
+export type ReorderFieldsInput = z.infer<typeof reorderFieldsInput>;

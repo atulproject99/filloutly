@@ -11,6 +11,7 @@ export const usersTable = pgTable("users", {
   role: rolesEnum().default("creator").notNull(),
   salt: text("salt"),
   password: text("password"),
+  refreshToken: text("refresh_token"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
 });

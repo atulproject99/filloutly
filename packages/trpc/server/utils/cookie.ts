@@ -35,6 +35,9 @@ export function deleteCookieFactory(res: Response) {
   };
 }
 const AUTHENTICATION_KEY = "authentication-token";
+const REFRESH_TOKEN_KEY = "refresh-token";
+
+// ── Access Token Cookie ────────────────────────────────────────────────────────
 export function setAuthenticationCookie(ctx: TRPCContext, accessToken: string) {
   ctx.createCookie(AUTHENTICATION_KEY, accessToken);
 }
@@ -43,4 +46,23 @@ export function getAuthenticationCookkie(ctx: TRPCContext) {
 }
 export function deleteAuthenticationCookie(ctx: TRPCContext) {
   ctx.deleteCookie(AUTHENTICATION_KEY);
+}
+
+// ── Refresh Token Cookie (7 days) ──────────────────────────────────────────────
+const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+
+export function setRefreshTokenCookie(ctx: TRPCContext, refreshToken: string) {
+  ctx.createCookie(REFRESH_TOKEN_KEY, refreshToken, {
+    path: "/",
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: SEVEN_DAYS,
+  });
+}
+export function getRefreshTokenCookie(ctx: TRPCContext) {
+  return ctx.getCookie(REFRESH_TOKEN_KEY);
+}
+export function deleteRefreshTokenCookie(ctx: TRPCContext) {
+  ctx.deleteCookie(REFRESH_TOKEN_KEY);
 }

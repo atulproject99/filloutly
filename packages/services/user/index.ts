@@ -138,6 +138,7 @@ class UserService {
         message: "6 digit code sent on your email please check your inbox ",
         isVerified: false,
         token: "",
+        refreshToken: "",
         id: user.id,
         email: user.email,
         role: user.role as "creator" | "admin",
@@ -148,12 +149,22 @@ class UserService {
         email: user.email,
         role: user.role,
       });
+      const refreshToken = JwtUtils.generateRefreshToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      });
+      // Persist refresh token in DB
+      await db
+        .update(usersTable)
+        .set({ refreshToken })
+        .where(eq(usersTable.id, user.id));
 
       return {
         message: "Logged in successfully",
-
         isVerified: true,
         token: accessToken,
+        refreshToken,
         id: user.id,
         email: user.email,
         role: user.role as "creator" | "admin",
@@ -188,17 +199,28 @@ class UserService {
     if (!updatedUser || updatedUser.length === 0) throw new Error("Error while updating user");
 
     const user = await this.getUserWithEmail(email);
-    /// generate token
+    /// generate tokens
     const accessToken = JwtUtils.generateJwtToken({
       id: user.id,
       email: user.email,
       role: user.role,
     });
+    const refreshToken = JwtUtils.generateRefreshToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+    // Persist refresh token in DB
+    await db
+      .update(usersTable)
+      .set({ refreshToken })
+      .where(eq(usersTable.id, user.id));
 
     return {
       message: "Email verified successfully",
       id: user.id,
       token: accessToken,
+      refreshToken,
       role: user.role as "creator" | "admin",
     };
   }
@@ -211,16 +233,62 @@ class UserService {
         fullName: usersTable.fullName,
         role: usersTable.role,
         profileImageUrl: usersTable.profileImageUrl,
+        refreshToken: usersTable.refreshToken,
       })
       .from(usersTable)
       .where(eq(usersTable.id, id));
     if (!user || user.length === 0 || !user[0]?.id) throw new Error("User not exist with this id");
     return user[0];
   }
+
   public async verifyAndDecodeUserToken(token: string) {
     const { id } = JwtUtils.verifyJwtToken(token);
     const userInfo = await this.userInfoUsingId(id);
     return { ...userInfo };
+  }
+
+  // ── Refresh Token Flow ─────────────────────────────────────────────────────
+  public async refreshUserToken(refreshToken: string) {
+    // 1. Verify the refresh token signature + expiry
+    const payload = JwtUtils.verifyRefreshToken(refreshToken);
+
+    // 2. Load user and compare stored token (rotation guard)
+    const userInfo = await this.userInfoUsingId(payload.id);
+    if (!userInfo.refreshToken || userInfo.refreshToken !== refreshToken) {
+      throw new Error("Refresh token reuse detected or token revoked");
+    }
+
+    // 3. Issue new access + refresh tokens (rotation)
+    const newAccessToken = JwtUtils.generateJwtToken({
+      id: userInfo.id,
+      email: userInfo.email,
+      role: userInfo.role,
+    });
+    const newRefreshToken = JwtUtils.generateRefreshToken({
+      id: userInfo.id,
+      email: userInfo.email,
+      role: userInfo.role,
+    });
+
+    // 4. Persist rotated refresh token
+    await db
+      .update(usersTable)
+      .set({ refreshToken: newRefreshToken })
+      .where(eq(usersTable.id, userInfo.id));
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      id: userInfo.id,
+    };
+  }
+
+  // ── Sign Out ───────────────────────────────────────────────────────────────
+  public async revokeRefreshToken(userId: string) {
+    await db
+      .update(usersTable)
+      .set({ refreshToken: null })
+      .where(eq(usersTable.id, userId));
   }
 }
 
