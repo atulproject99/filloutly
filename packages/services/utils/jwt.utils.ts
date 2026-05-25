@@ -19,7 +19,6 @@ class JwtUtils {
     }
   }
 
-  // ── Refresh Token (7d) ─────────────────────────────────────────────
   public static generateRefreshToken(payload: GenerateTokePayloadType) {
     return jwt.sign(payload, env.REFRESH_TOKEN_SECRET, {
       expiresIn: env.REFRESH_TOKEN_EXPIRY as any,

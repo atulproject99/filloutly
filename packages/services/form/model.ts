@@ -127,3 +127,25 @@ export type CreateFieldInput = z.infer<typeof createFieldInput>;
 export type UpdateFieldInput = z.infer<typeof updateFieldInput>;
 export type DeleteFieldInput = z.infer<typeof deleteFieldInput>;
 export type ReorderFieldsInput = z.infer<typeof reorderFieldsInput>;
+
+export const getPublicFormBySlugInput = z.object({
+  slug: z.string().describe("Form slug"),
+});
+
+export const submitResponseInput = z.object({
+  formId: z.string().uuid(),
+  answers: z.record(z.string(), z.any()).describe("Key-value pairs of field IDs to answers"),
+});
+
+export const getResponsesInput = z.object({
+  formId: z.string().uuid(),
+});
+
+export const getAnalyticsInput = z.object({
+  userId: z.string().uuid().describe("The user ID"),
+});
+
+export type GetPublicFormBySlugInput = z.infer<typeof getPublicFormBySlugInput>;
+export type SubmitResponseInput = z.infer<typeof submitResponseInput>;
+export type GetResponsesInput = z.infer<typeof getResponsesInput>;
+export type GetAnalyticsInput = z.infer<typeof getAnalyticsInput>;

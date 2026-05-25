@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { Plus, MoreHorizontal, Edit, Globe, Archive, Trash2, Blocks } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Globe, Archive, Trash2, Blocks, List, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import slugify from "slugify";
@@ -84,7 +84,16 @@ export default function MyFormsPage() {
   const [editingForm, setEditingForm] = useState<any>(null);
 
   const utils = trpc.useUtils();
-  const { data: forms, isLoading } = trpc.form.getForms.useQuery();
+  const { data: forms, isLoading } = trpc.form.getForms.useQuery(undefined, {
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalPages = forms ? Math.ceil(forms.length / itemsPerPage) : 0;
+  const paginatedForms = forms ? forms.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage) : [];
+
   const { createFormAsync, isLoading: isCreating } = useCreateForm();
   const { updateFormAsync, isLoading: isUpdating } = useUpdateForm();
   const { deleteFormAsync } = useDeleteForm();
@@ -480,14 +489,14 @@ export default function MyFormsPage() {
                   Loading forms...
                 </TableCell>
               </TableRow>
-            ) : forms?.length === 0 ? (
+            ) : paginatedForms.length === 0 ? (
               <TableRow className="border-white/5">
                 <TableCell colSpan={5} className="h-24 text-center text-white/40">
                   No forms found. Create one to get started!
                 </TableCell>
               </TableRow>
             ) : (
-              forms?.map((form) => (
+              paginatedForms.map((form) => (
                 <TableRow
                   key={form.id}
                   className="border-white/5 hover:bg-white/5 transition-colors"
@@ -515,6 +524,12 @@ export default function MyFormsPage() {
                           <Link href={`/dashboard/forms/${form.id}/builder`} className="cursor-pointer hover:bg-white/10 focus:bg-white/10 w-full flex items-center">
                             <Blocks className="mr-2 h-4 w-4 text-blue-400" />
                             Build Form
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/forms/${form.id}/responses`} className="cursor-pointer hover:bg-white/10 focus:bg-white/10 w-full flex items-center">
+                            <List className="mr-2 h-4 w-4 text-purple-400" />
+                            View Responses
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem className="cursor-pointer hover:bg-white/10 focus:bg-white/10" onClick={() => openEditDialog(form)}>
@@ -548,6 +563,52 @@ export default function MyFormsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination Controls */}
+      {!isLoading && totalPages > 1 && (
+        <div className="flex items-center justify-between px-2">
+          <div className="text-sm text-white/50">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, forms?.length || 0)} of {forms?.length} forms
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Previous
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${
+                    currentPage === i + 1 
+                      ? 'bg-red-600 text-white' 
+                      : 'text-white/60 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

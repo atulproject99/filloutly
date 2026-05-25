@@ -1,7 +1,7 @@
 import { formsTable } from "@repo/database/models/form";
 import { formFieldsTable } from "@repo/database/models/form_field";
-import { db, eq } from "../../database/index";
-import {
+import { responsesTable } from "@repo/database/models/response";
+import { db, desc, eq } from "../../database/index";
   createFieldInput,
   CreateFieldInput,
   createFormInput,
@@ -14,12 +14,20 @@ import {
   GetAllFormsInput,
   getFormByIdInput,
   GetFormByIdInput,
+  getPublicFormBySlugInput,
+  GetPublicFormBySlugInput,
+  getResponsesInput,
+  GetResponsesInput,
   reorderFieldsInput,
   ReorderFieldsInput,
+  submitResponseInput,
+  SubmitResponseInput,
   updateFieldInput,
   UpdateFieldInput,
   updateFormInput,
   UpdateFormInput,
+  getAnalyticsInput,
+  GetAnalyticsInput,
 } from "./model";
 
 class FormService {
@@ -232,6 +240,105 @@ class FormService {
 
     return {
       message: "Fields reordered successfully",
+    };
+  }
+
+  /// Responses
+  public async getPublicFormBySlug(payload: GetPublicFormBySlugInput) {
+    const { slug } = await getPublicFormBySlugInput.parseAsync(payload);
+
+    const form = await db.select().from(formsTable).where(eq(formsTable.slug, slug));
+
+    if (!form || form.length === 0) {
+      throw new Error("Form not found");
+    }
+
+    if (form[0]!.status !== "published") {
+      throw new Error("This form is not published yet.");
+    }
+
+    const fields = await db
+      .select()
+      .from(formFieldsTable)
+      .where(eq(formFieldsTable.formId, form[0]!.id));
+    fields.sort((a, b) => a.order - b.order);
+
+    return {
+      ...form[0],
+      fields,
+    };
+  }
+
+  public async submitResponse(payload: SubmitResponseInput) {
+    const { formId, answers } = await submitResponseInput.parseAsync(payload);
+
+    // Make sure form exists and is published
+    const form = await db.select().from(formsTable).where(eq(formsTable.id, formId));
+    if (!form || form.length === 0 || form[0]!.status !== "published") {
+      throw new Error("Form is not available for submissions.");
+    }
+
+    const newResponse = await db
+      .insert(responsesTable)
+      .values({
+        formId,
+        answers,
+      })
+      .returning();
+
+    if (!newResponse || newResponse.length === 0 || !newResponse[0]?.id) {
+      throw new Error("Failed to submit response.");
+    }
+
+    return {
+      message: "Response submitted successfully!",
+      responseId: newResponse[0].id,
+    };
+  }
+
+  public async getResponses(payload: GetResponsesInput) {
+    const { formId } = await getResponsesInput.parseAsync(payload);
+    const responses = await db
+      .select()
+      .from(responsesTable)
+      .where(eq(responsesTable.formId, formId))
+      .orderBy(desc(responsesTable.submittedAt));
+
+    return responses;
+  }
+
+  public async getAnalytics(payload: z.infer<typeof getAnalyticsInput>) {
+    const { userId } = await getAnalyticsInput.parseAsync(payload);
+    
+    // Get all forms for this user
+    const forms = await db.select().from(formsTable).where(eq(formsTable.creatorId, userId));
+    const totalForms = forms.length;
+    const publishedForms = forms.filter((f) => f.status === "published").length;
+    const draftForms = forms.filter((f) => f.status === "draft").length;
+
+    // Get all responses for these forms
+    const formIds = forms.map((f) => f.id);
+    let totalResponses = 0;
+    let recentResponses = [];
+
+    if (formIds.length > 0) {
+      // In Drizzle, using `inArray` is better, but doing it sequentially or using multiple queries is also fine
+      // We will loop or use a simple query if possible, but let's just fetch responses for all user forms
+      const responses = await db.select().from(responsesTable); // Need to filter properly
+      const userResponses = responses.filter((r) => formIds.includes(r.formId));
+      
+      totalResponses = userResponses.length;
+      recentResponses = userResponses
+        .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+        .slice(0, 10);
+    }
+
+    return {
+      totalForms,
+      publishedForms,
+      draftForms,
+      totalResponses,
+      recentResponses,
     };
   }
 }

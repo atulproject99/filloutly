@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { trpc } from "~/trpc/client";
 
 const menus = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -26,10 +27,7 @@ const menus = [
   { name: "Templates", href: "/dashboard/templates", icon: Copy },
   { name: "Themes", href: "/dashboard/themes", icon: Palette },
   { name: "Responses", href: "/dashboard/responses", icon: MessageSquare },
-  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { name: "Explore", href: "/dashboard/explore", icon: Compass },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
-  { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
+  // { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
 ];
 
 interface SidebarProps {
@@ -40,6 +38,7 @@ interface SidebarProps {
 export function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
+  const utils = trpc.useUtils();
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -80,6 +79,14 @@ export function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
             <Link
               key={menu.name}
               href={menu.href}
+              onClick={(e) => {
+                if (menu.name === "My Forms") {
+                  utils.form.getForms.invalidate();
+                }
+                if (isActive) {
+                  // Optional: also invalidate other active routes if clicked
+                }
+              }}
               className={cn(
                 "group relative flex items-center p-3 rounded-2xl transition-colors",
                 isActive ? "text-white" : "text-white/60 hover:text-white hover:bg-white/5"

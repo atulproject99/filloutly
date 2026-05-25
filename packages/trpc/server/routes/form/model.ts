@@ -134,3 +134,18 @@ export const reorderFieldsInputType = z.object({
 export const reorderFieldsOutputType = z.object({
   message: z.string(),
 });
+
+export const submitResponseOutputType = z.object({
+  message: z.string(),
+  responseId: z.string(),
+});
+
+export const getResponsesOutputType = z.array(z.any());
+
+export const getAnalyticsOutputType = z.object({
+  totalForms: z.number(),
+  publishedForms: z.number(),
+  draftForms: z.number(),
+  totalResponses: z.number(),
+  recentResponses: z.array(z.any()),
+});

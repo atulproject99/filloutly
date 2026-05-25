@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useParams } from "next/navigation";
 import useFormBuilder from "~/hooks/useFormBuilder";
 import { trpc } from "~/trpc/client";
+import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -51,8 +52,9 @@ import {
   Sparkles,
   LayoutTemplate,
   Monitor,
-  Check,
   Zap,
+  Share2,
+  Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "~/components/ui/button";
@@ -770,6 +772,16 @@ export default function FormBuilderPage() {
 
   const currentTheme = THEMES.find((t) => t.id === (form?.theme ?? "apple-glass")) ?? THEMES[0]!;
 
+  const handleShare = () => {
+    if (form?.slug) {
+      const url = `${window.location.origin}/f/${form.slug}`;
+      navigator.clipboard.writeText(url);
+      toast.success("Public link copied to clipboard!");
+    } else {
+      toast.error("Form doesn't have a slug yet.");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-black">
@@ -816,6 +828,28 @@ export default function FormBuilderPage() {
           </Badge>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs h-8 gap-2"
+          >
+            <Link href={`/dashboard/forms/${formId}/responses`}>
+              <List className="w-3.5 h-3.5" />
+              Responses
+            </Link>
+          </Button>
+          {form.status === "published" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              className="border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs h-8 gap-2"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              Share
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

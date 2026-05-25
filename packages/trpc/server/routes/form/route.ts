@@ -1,5 +1,5 @@
 import { formService } from "../../services";
-import { authProcedure, router } from "../../trpc";
+import { authProcedure, publicProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import {
     createFormInputType,
@@ -20,12 +20,61 @@ import {
     reorderFieldsOutputType,
     getFormByIdInput,
     formOutputType,
+    submitResponseOutputType,
+    getResponsesOutputType,
+    getAnalyticsOutputType,
 } from "./model";
+import { getPublicFormBySlugInput, submitResponseInput, getResponsesInput } from "@repo/services/form/model";
 
 const TAGS = ["Form"];
 const getPath = generatePath("/form");
 
 export const formRouter = router({
+  getPublicFormBySlug: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/f/{slug}"),
+        tags: TAGS,
+      },
+    })
+    .input(getPublicFormBySlugInput)
+    .output(formOutputType)
+    .query(async ({ input }) => {
+      const result = await formService.getPublicFormBySlug(input);
+      return result as any;
+    }),
+
+  submitResponse: publicProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/submit"),
+        tags: TAGS,
+      },
+    })
+    .input(submitResponseInput)
+    .output(submitResponseOutputType)
+    .mutation(async ({ input }) => {
+      const result = await formService.submitResponse(input);
+      return result;
+    }),
+
+  getResponses: authProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/{formId}/responses"),
+        tags: TAGS,
+      },
+    })
+    .input(getResponsesInput)
+    .output(getResponsesOutputType)
+    .query(async ({ input }) => {
+      const responses = await formService.getResponses(input);
+      return responses;
+    }),
+
   createForm: authProcedure
     .meta({
       openapi: {
@@ -153,7 +202,7 @@ export const formRouter = router({
       return await formService.deleteField(input);
     }),
 
-  reorderFields: authProcedure
+    reorderFields: authProcedure
     .meta({
       openapi: {
         method: "PUT",
@@ -165,5 +214,19 @@ export const formRouter = router({
     .output(reorderFieldsOutputType)
     .mutation(async ({ input }) => {
       return await formService.reorderFields(input);
+    }),
+
+  getAnalytics: authProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/analytics"),
+        tags: TAGS,
+      },
+    })
+    .output(getAnalyticsOutputType)
+    .query(async ({ ctx }) => {
+      const result = await formService.getAnalytics({ userId: ctx.user.id });
+      return result;
     }),
 });
