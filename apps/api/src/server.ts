@@ -19,6 +19,14 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 });
 app.set("trust proxy", 1);
 
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false,
+  }),
+);
+
 const allowedOrigins = [
   "http://localhost:3000",
   "https://filloutly.in",
@@ -29,33 +37,27 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
 
   if (origin && allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Origin", origin);
   }
 
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header(
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Authorization",
   );
-
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Vary", "Origin");
 
   if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
+    res.status(204).end();
+    return;
   }
 
   next();
 });
+
 app.use(express.json());
-
 app.use(cookieParser());
-
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-    crossOriginEmbedderPolicy: false,
-  }),
-);
 
 const globalLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
