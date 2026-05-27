@@ -21,19 +21,22 @@ export function createCookieFactory(res: express.Response) {
     value: string,
     opts: express.CookieOptions = defaultCookieOption,
   ) {
-    res.cookie(name, value, opts);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (res as any).cookie(name, value, opts);
   };
 }
 
 export function getCookieFactory(req: express.Request) {
   return function getCookie(name: string) {
-    return req.cookies?.[name];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (req as any).cookies?.[name];
   };
 }
 
 export function deleteCookieFactory(res: express.Response) {
   return function deleteCookie(name: string) {
-    res.clearCookie(name, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (res as any).clearCookie(name, {
       path: "/",
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
