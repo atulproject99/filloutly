@@ -11,7 +11,10 @@ const envSchema = z.object({
 
 function createEnv(env: NodeJS.ProcessEnv) {
   const safeParseResult = envSchema.safeParse(env);
-  if (!safeParseResult.success) throw new Error(safeParseResult.error.message);
+  if (!safeParseResult.success) {
+    console.error("❌ Invalid environment variables:", safeParseResult.error.flatten().fieldErrors);
+    throw new Error("Invalid environment variables: " + JSON.stringify(safeParseResult.error.flatten().fieldErrors));
+  }
   return safeParseResult.data;
 }
 
