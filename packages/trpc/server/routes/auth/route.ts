@@ -23,6 +23,10 @@ import {
   signUserWithEmailPasswordOutputType,
   verifyEmailInputType,
   verifyEmailOutputType,
+  forgotPasswordInputType,
+  forgotPasswordOutputType,
+  resetPasswordInputType,
+  resetPasswordOutputType,
 } from "./model";
 
 const TAGS = ["Authentication"];
@@ -201,5 +205,35 @@ export const authRouter = router({
         role: u.role,
         createdAt: u.createdAt,
       }));
+    }),
+
+  forgotPassword: publicProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/forgotPassword"),
+        tags: TAGS,
+      },
+    })
+    .input(forgotPasswordInputType)
+    .output(forgotPasswordOutputType)
+    .mutation(async ({ input }) => {
+      const { message, email } = await userService.forgotPassword(input);
+      return { message, email };
+    }),
+
+  resetPassword: publicProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/resetPassword"),
+        tags: TAGS,
+      },
+    })
+    .input(resetPasswordInputType)
+    .output(resetPasswordOutputType)
+    .mutation(async ({ input }) => {
+      const { message, email } = await userService.resetPassword(input);
+      return { message, email };
     }),
 });

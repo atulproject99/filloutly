@@ -29,6 +29,8 @@ import useResendEmail from "~/hooks/useResendEmail";
 import useSignIn from "~/hooks/useSignIn";
 import useSignUp from "~/hooks/useSignUp";
 import useVerifyEmail from "~/hooks/useVerifyEmail";
+import useForgotPassword from "~/hooks/useForgotPassword";
+import useResetPassword from "~/hooks/useResetPassword";
 
 const successToastStyle = { style: { background: "#16a34a", color: "#fff", border: "none" } };
 const errorToastStyle = { style: { background: "#dc2626", color: "#fff", border: "none" } };
@@ -49,7 +51,16 @@ const otpSchema = z.object({
   pin: z.string().length(6, "Please enter a 6-digit PIN."),
 });
 
-type ViewState = "login" | "register" | "otp";
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address."),
+});
+
+const resetPasswordSchema = z.object({
+  pin: z.string().length(6, "Please enter a 6-digit PIN."),
+  newPassword: z.string().min(8, "Password must be at least 8 characters."),
+});
+
+type ViewState = "login" | "register" | "otp" | "forgot-password" | "reset-password";
 
 interface AuthDialogProps {
   isOpen: boolean;
@@ -73,6 +84,10 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
   const { verifyEmailAsync, isLoading: isLoadingForVerify } = useVerifyEmail();
 
   const { resendEmailAsync, isLoading: isLoadingForResend } = useResendEmail();
+
+  const { forgotPasswordAsync, isLoading: isLoadingForForgot } = useForgotPassword();
+
+  const { resetPasswordAsync, isLoading: isLoadingForReset } = useResetPassword();
 
   // Reset view when dialog opens
   useEffect(() => {
@@ -104,6 +119,16 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
   const otpForm = useForm<z.infer<typeof otpSchema>>({
     resolver: zodResolver(otpSchema),
     defaultValues: { pin: "" },
+  });
+
+  const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
+  });
+
+  const resetPasswordForm = useForm<z.infer<typeof resetPasswordSchema>>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { pin: "", newPassword: "" },
   });
 
   const onLoginSubmit = async (_values: z.infer<typeof loginSchema>) => {
@@ -178,6 +203,39 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
     }
   };
 
+  const onForgotPasswordSubmit = async (_values: z.infer<typeof forgotPasswordSchema>) => {
+    try {
+      const response = await forgotPasswordAsync({ email: _values.email });
+      if (response?.message) {
+        toast.success(response.message, successToastStyle);
+        setEmail(_values.email);
+        setView("reset-password");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to send reset code", errorToastStyle);
+    }
+  };
+
+  const onResetPasswordSubmit = async (_values: z.infer<typeof resetPasswordSchema>) => {
+    if (!email) {
+      toast.error("Email not found. Please try again.", errorToastStyle);
+      return;
+    }
+    try {
+      const response = await resetPasswordAsync({
+        email,
+        otp: _values.pin,
+        newPassword: _values.newPassword,
+      });
+      if (response?.message) {
+        toast.success(response.message, successToastStyle);
+        setView("login");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to reset password", errorToastStyle);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] bg-[#0a0a0a] border border-white/10 text-white shadow-2xl glass-card">
@@ -191,11 +249,15 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
             {view === "login" && "Welcome back"}
             {view === "register" && "Join the elite"}
             {view === "otp" && "Verify your identity"}
+            {view === "forgot-password" && "Reset Password"}
+            {view === "reset-password" && "Set New Password"}
           </DialogTitle>
           <DialogDescription className="text-center text-neutral-400">
             {view === "login" && "Enter your credentials to access the vault."}
             {view === "register" && "Create your cinematic creator account."}
             {view === "otp" && "We sent a 6-digit code to your email."}
+            {view === "forgot-password" && "Enter your email to receive a reset code."}
+            {view === "reset-password" && "Enter the code and your new password."}
           </DialogDescription>
         </DialogHeader>
 
@@ -238,6 +300,15 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                     </FormItem>
                   )}
                 />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setView("forgot-password")}
+                    className="text-xs text-neutral-400 hover:text-red-400 font-medium"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
                 <Button
                   type="submit"
                   disabled={isLoadingForSignIn}
@@ -408,6 +479,115 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                       {isLoadingForResend ? "Resending..." : "Resend Code"}
                     </button>
                   )}
+                </div>
+              </form>
+            </Form>
+          )}
+
+          {view === "forgot-password" && (
+            <Form {...forgotPasswordForm}>
+              <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
+                <FormField
+                  control={forgotPasswordForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-neutral-300">Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="you@example.com"
+                          {...field}
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-400" />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  disabled={isLoadingForForgot}
+                  className="w-full h-11 bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] mt-6 font-semibold"
+                >
+                  {isLoadingForForgot ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Reset Code"}
+                </Button>
+                <div className="text-center text-sm text-neutral-400 mt-4">
+                  Remember your password?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setView("login")}
+                    className="text-red-400 hover:text-red-300 font-medium"
+                  >
+                    Log in
+                  </button>
+                </div>
+              </form>
+            </Form>
+          )}
+
+          {view === "reset-password" && (
+            <Form {...resetPasswordForm}>
+              <form onSubmit={resetPasswordForm.handleSubmit(onResetPasswordSubmit)} className="space-y-6 flex flex-col items-center">
+                <FormField
+                  control={resetPasswordForm.control}
+                  name="pin"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-center w-full">
+                      <FormLabel className="text-neutral-300 mb-2">Reset Code</FormLabel>
+                      <FormControl>
+                        <InputOTP maxLength={6} {...field} className="gap-2">
+                          <InputOTPGroup className="gap-2">
+                            <InputOTPSlot index={0} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
+                            <InputOTPSlot index={1} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
+                            <InputOTPSlot index={2} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
+                            <InputOTPSlot index={3} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
+                            <InputOTPSlot index={4} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
+                            <InputOTPSlot index={5} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </FormControl>
+                      <FormMessage className="text-red-400 mt-2" />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={resetPasswordForm.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel className="text-neutral-300">New Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          {...field}
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-400" />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  disabled={isLoadingForReset}
+                  className="w-full h-11 bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] font-semibold"
+                >
+                  {isLoadingForReset ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Reset Password"
+                  )}
+                </Button>
+                <div className="text-center text-sm text-neutral-400 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setView("login")}
+                    className="text-red-400 hover:text-red-300 font-medium"
+                  >
+                    Back to login
+                  </button>
                 </div>
               </form>
             </Form>

@@ -80,3 +80,23 @@ export const getAllUsersOutputType = z.array(
     createdAt: z.date().nullable(),
   })
 );
+
+export const forgotPasswordInputType = z.object({
+  email: z.email().describe("Email of user"),
+});
+
+export const forgotPasswordOutputType = z.object({
+  message: z.string().describe("Message from server"),
+  email: z.email().describe("email of user"),
+});
+
+export const resetPasswordInputType = z.object({
+  email: z.email().describe("Email of user"),
+  otp: z.string().describe("OTP code"),
+  newPassword: z.string().min(8).describe("New password"),
+});
+
+export const resetPasswordOutputType = z.object({
+  message: z.string().describe("Message from server"),
+  email: z.email().describe("email of user"),
+});

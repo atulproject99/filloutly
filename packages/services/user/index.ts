@@ -1,5 +1,6 @@
 import { emailVerificationTable } from "@repo/database/models/email-verifications";
 import { usersTable } from "@repo/database/models/user";
+import { passwordResetsTable } from "@repo/database/models/password-resets";
 import crypto from "node:crypto";
 import { db, eq } from "../../database/index";
 import EmailService from "../utils/email.utils";
@@ -13,6 +14,10 @@ import {
   SignUserWithEmailPasswordInput,
   verifyEmailInput,
   VerifyEmailInput,
+  forgotPasswordInput,
+  ForgotPasswordInput,
+  resetPasswordInput,
+  ResetPasswordInput,
 } from "./model";
 
 class UserService {
@@ -234,6 +239,73 @@ class UserService {
       .where(eq(usersTable.id, id));
     if (!user || user.length === 0 || !user[0]?.id) throw new Error("User not exist with this id");
     return user[0];
+  }
+
+  public async forgotPassword(payload: ForgotPasswordInput) {
+    const { email } = await forgotPasswordInput.parseAsync(payload);
+    const user = await this.getUserWithEmail(email);
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    const existingResets = await db
+      .select()
+      .from(passwordResetsTable)
+      .where(eq(passwordResetsTable.email, email));
+
+    if (existingResets.length === 0) {
+      await db.insert(passwordResetsTable).values({ email, otp, expiresAt });
+    } else {
+      await db.update(passwordResetsTable).set({ otp, expiresAt }).where(eq(passwordResetsTable.email, email));
+    }
+
+    await EmailService.sendPasswordResetOTP(email, otp);
+
+    return {
+      message: "Password reset code sent to your email",
+      email: user.email,
+    };
+  }
+
+  public async resetPassword(payload: ResetPasswordInput) {
+    const { email, otp, newPassword } = await resetPasswordInput.parseAsync(payload);
+    
+    const resets = await db
+      .select()
+      .from(passwordResetsTable)
+      .where(eq(passwordResetsTable.email, email));
+
+    if (resets.length === 0 || !resets[0]) {
+      throw new Error("No password reset request found for this email");
+    }
+
+    const resetData = resets[0];
+    const currentDate = new Date();
+
+    if (resetData.expiresAt < currentDate) {
+      throw new Error("OTP has expired");
+    }
+
+    if (resetData.otp !== otp) {
+      throw new Error("Invalid OTP");
+    }
+
+    const user = await this.getUserWithEmail(email);
+    if (!user.salt) throw new Error("Invalid user state (missing salt)");
+
+    const hashedPassword = this.hashPassword(user.salt, newPassword);
+
+    await db
+      .update(usersTable)
+      .set({ password: hashedPassword })
+      .where(eq(usersTable.email, email));
+
+    await db.delete(passwordResetsTable).where(eq(passwordResetsTable.email, email));
+
+    return {
+      message: "Password reset successfully",
+      email: user.email,
+    };
   }
 
   public async verifyAndDecodeUserToken(token: string) {
