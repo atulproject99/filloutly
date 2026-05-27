@@ -18,7 +18,7 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
   version: "1.0.0",
   baseUrl: env.BASE_URL.concat("/api"),
 });
-
+app.set("trust proxy", 1);
 app.use(
   cors({
     origin: ["http://localhost:3000", "https://filloutly.in", "https://www.filloutly.in"],
