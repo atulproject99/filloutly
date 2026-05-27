@@ -10,7 +10,7 @@ const ONE_YEAR = 12 * ONE_MONTH;
 const defaultCookieOption: express.CookieOptions = {
   path: "/",
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: process.env.NODE_ENV === "production" || process.env.NODE_ENV === "prod",
   sameSite: "none",
   maxAge: ONE_YEAR,
 };
@@ -39,7 +39,7 @@ export function deleteCookieFactory(res: express.Response) {
     (res as any).clearCookie(name, {
       path: "/",
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" || process.env.NODE_ENV === "prod",
       sameSite: "none",
     });
   };
@@ -66,7 +66,7 @@ export function setRefreshTokenCookie(ctx: TRPCContext, refreshToken: string) {
   ctx.createCookie(REFRESH_TOKEN_KEY, refreshToken, {
     path: "/",
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" || process.env.NODE_ENV === "prod",
     sameSite: "none",
     maxAge: SEVEN_DAYS,
   });
