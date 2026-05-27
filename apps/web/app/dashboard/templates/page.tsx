@@ -87,7 +87,7 @@ export default function TemplatesPage() {
         title: template.title,
         description: template.description,
         slug: uniqueSlug,
-        theme: template.theme,
+        theme: template.theme as any,
       });
 
       const formId = formRes.id;

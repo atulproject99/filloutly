@@ -9,7 +9,7 @@ const ONE_YEAR = 12 * ONE_MONTH;
 const defaultCookieOption: CookieOptions = {
   path: "/",
   httpOnly: true,
-  secure: true,
+  secure: process.env.NODE_ENV === "production",
   sameSite: "strict",
   maxAge: ONE_YEAR,
 };
@@ -31,7 +31,12 @@ export function getCookieFactory(req: Request) {
 
 export function deleteCookieFactory(res: Response) {
   return function deleteCookie(name: string) {
-    res.clearCookie(name);
+    res.clearCookie(name, {
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
   };
 }
 const AUTHENTICATION_KEY = "authentication-token";
@@ -55,7 +60,7 @@ export function setRefreshTokenCookie(ctx: TRPCContext, refreshToken: string) {
   ctx.createCookie(REFRESH_TOKEN_KEY, refreshToken, {
     path: "/",
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: SEVEN_DAYS,
   });

@@ -155,10 +155,7 @@ class UserService {
         role: user.role,
       });
       // Persist refresh token in DB
-      await db
-        .update(usersTable)
-        .set({ refreshToken })
-        .where(eq(usersTable.id, user.id));
+      await db.update(usersTable).set({ refreshToken }).where(eq(usersTable.id, user.id));
 
       return {
         message: "Logged in successfully",
@@ -211,10 +208,7 @@ class UserService {
       role: user.role,
     });
     // Persist refresh token in DB
-    await db
-      .update(usersTable)
-      .set({ refreshToken })
-      .where(eq(usersTable.id, user.id));
+    await db.update(usersTable).set({ refreshToken }).where(eq(usersTable.id, user.id));
 
     return {
       message: "Email verified successfully",
@@ -247,18 +241,15 @@ class UserService {
     return { ...userInfo };
   }
 
-  // ── Refresh Token Flow ─────────────────────────────────────────────────────
+  // ── Refresh Token Flow
   public async refreshUserToken(refreshToken: string) {
-    // 1. Verify the refresh token signature + expiry
     const payload = JwtUtils.verifyRefreshToken(refreshToken);
 
-    // 2. Load user and compare stored token (rotation guard)
     const userInfo = await this.userInfoUsingId(payload.id);
     if (!userInfo.refreshToken || userInfo.refreshToken !== refreshToken) {
       throw new Error("Refresh token reuse detected or token revoked");
     }
 
-    // 3. Issue new access + refresh tokens (rotation)
     const newAccessToken = JwtUtils.generateJwtToken({
       id: userInfo.id,
       email: userInfo.email,
@@ -270,7 +261,6 @@ class UserService {
       role: userInfo.role,
     });
 
-    // 4. Persist rotated refresh token
     await db
       .update(usersTable)
       .set({ refreshToken: newRefreshToken })
@@ -283,12 +273,8 @@ class UserService {
     };
   }
 
-  // ── Sign Out ───────────────────────────────────────────────────────────────
   public async revokeRefreshToken(userId: string) {
-    await db
-      .update(usersTable)
-      .set({ refreshToken: null })
-      .where(eq(usersTable.id, userId));
+    await db.update(usersTable).set({ refreshToken: null }).where(eq(usersTable.id, userId));
   }
 }
 

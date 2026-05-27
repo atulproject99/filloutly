@@ -65,8 +65,18 @@ export const refreshTokenOutputType = z.object({
 });
 
 // ── Sign Out ─────────────────────────────────────────────────────────────────
-export const signOutInputType = z.undefined();
+export const signOutInputType = z.object({}).optional();
 
 export const signOutOutputType = z.object({
   message: z.string().describe("Message from server"),
 });
+
+export const getAllUsersOutputType = z.array(
+  z.object({
+    id: z.string(),
+    email: z.string(),
+    fullName: z.string(),
+    role: z.string(),
+    createdAt: z.date().nullable(),
+  })
+);

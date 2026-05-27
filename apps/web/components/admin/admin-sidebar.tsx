@@ -30,11 +30,8 @@ const adminMenus = [
   { name: "Analytics", href: "/admin/analytics", icon: BarChart },
   { name: "Reports", href: "/admin/reports", icon: FileBarChart },
   { name: "Themes", href: "/admin/themes", icon: Palette },
-  { name: "Moderation", href: "/admin/moderation", icon: ShieldAlert },
   { name: "API Monitoring", href: "/admin/api", icon: Server },
-  { name: "Billing", href: "/admin/billing", icon: CreditCard },
   { name: "System Logs", href: "/admin/logs", icon: Terminal },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 interface AdminSidebarProps {

@@ -2,6 +2,7 @@ import { formsTable } from "@repo/database/models/form";
 import { formFieldsTable } from "@repo/database/models/form_field";
 import { responsesTable } from "@repo/database/models/response";
 import { db, desc, eq } from "../../database/index";
+import {
   createFieldInput,
   CreateFieldInput,
   createFormInput,
@@ -307,7 +308,7 @@ class FormService {
     return responses;
   }
 
-  public async getAnalytics(payload: z.infer<typeof getAnalyticsInput>) {
+  public async getAnalytics(payload: GetAnalyticsInput) {
     const { userId } = await getAnalyticsInput.parseAsync(payload);
     
     // Get all forms for this user
@@ -319,7 +320,7 @@ class FormService {
     // Get all responses for these forms
     const formIds = forms.map((f) => f.id);
     let totalResponses = 0;
-    let recentResponses = [];
+    let recentResponses: any[] = [];
 
     if (formIds.length > 0) {
       // In Drizzle, using `inArray` is better, but doing it sequentially or using multiple queries is also fine

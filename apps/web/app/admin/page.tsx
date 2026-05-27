@@ -4,8 +4,11 @@ import { motion } from "framer-motion";
 import { Users, FileStack, Database, CreditCard } from "lucide-react";
 import { MissionControlStat } from "~/components/admin/mission-control-stats";
 import { LiveActivityChart } from "~/components/admin/live-activity-chart";
+import { trpc } from "~/trpc/client";
+import { Loader2 } from "lucide-react";
 
 export default function AdminOverviewPage() {
+  const { data: stats, isLoading } = trpc.admin.getPlatformStats.useQuery();
   return (
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -43,39 +46,46 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <MissionControlStat 
-          title="Total Creators" 
-          value="14,204" 
-          trend="8.2%" 
-          trendUp={true} 
-          icon={Users} 
-          delay={0.1} 
-        />
-        <MissionControlStat 
-          title="Active Forms" 
-          value="892,103" 
-          trend="12.4%" 
-          trendUp={true} 
-          icon={FileStack} 
-          delay={0.2} 
-        />
-        <MissionControlStat 
-          title="API Load" 
-          value="84%" 
-          trend="4.1%" 
-          trendUp={true} 
-          icon={Database} 
-          delay={0.3} 
-          alert={true}
-        />
-        <MissionControlStat 
-          title="MRR" 
-          value="$1.2M" 
-          trend="18.5%" 
-          trendUp={true} 
-          icon={CreditCard} 
-          delay={0.4} 
-        />
+        {isLoading ? (
+          <div className="col-span-4 flex justify-center py-12">
+            <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
+          </div>
+        ) : (
+          <>
+            <MissionControlStat 
+              title="Total Creators" 
+              value={stats?.totalUsers.toLocaleString() || "0"} 
+              trend="--" 
+              trendUp={true} 
+              icon={Users} 
+              delay={0.1} 
+            />
+            <MissionControlStat 
+              title="Active Forms" 
+              value={stats?.totalForms.toLocaleString() || "0"} 
+              trend="--" 
+              trendUp={true} 
+              icon={FileStack} 
+              delay={0.2} 
+            />
+            <MissionControlStat 
+              title="Total Responses" 
+              value={stats?.totalResponses.toLocaleString() || "0"} 
+              trend="--" 
+              trendUp={true} 
+              icon={Database} 
+              delay={0.3} 
+            />
+            <MissionControlStat 
+              title="MRR" 
+              value="$0" 
+              trend="--" 
+              trendUp={true} 
+              icon={CreditCard} 
+              delay={0.4} 
+            />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mt-6">

@@ -10,6 +10,7 @@ import { generatePath } from "../../utils/path-generator";
 import {
   createUserWithEmailPasswordInputType,
   createUserWithEmailPasswordOutputType,
+  getAllUsersOutputType,
   getUserInfoInputType,
   getUserInfoOutputType,
   refreshTokenInputType,
@@ -140,6 +141,23 @@ export const authRouter = router({
       return { message: "Signed out successfully" };
     }),
 
+  logout: authProcedure
+    .meta({
+      openapi: {
+        method: "POST",
+        path: getPath("/logout"),
+        tags: TAGS,
+      },
+    })
+    .input(signOutInputType)
+    .output(signOutOutputType)
+    .mutation(async ({ ctx }) => {
+      await userService.revokeRefreshToken(ctx.user.id);
+      deleteAuthenticationCookie(ctx);
+      deleteRefreshTokenCookie(ctx);
+      return { message: "Logged out successfully" };
+    }),
+
   getUserInfo: authProcedure
     .meta({
       openapi: {
@@ -155,5 +173,33 @@ export const authRouter = router({
         ctx.user.id,
       );
       return { id, email, fullName, role, profileImageUrl: profileImageUrl || "" };
+    }),
+
+  getAllUsers: authProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/all"),
+        tags: TAGS,
+      },
+    })
+    .output(getAllUsersOutputType)
+    .query(async () => {
+      const { db, desc, ne } = await import("@repo/database");
+      const { usersTable } = await import("@repo/database/models/user");
+
+      const users = await db
+        .select()
+        .from(usersTable)
+        .where(ne(usersTable.role, "admin"))
+        .orderBy(desc(usersTable.createdAt));
+
+      return users.map((u) => ({
+        id: u.id,
+        email: u.email,
+        fullName: u.fullName,
+        role: u.role,
+        createdAt: u.createdAt,
+      }));
     }),
 });
