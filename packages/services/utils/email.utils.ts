@@ -5,7 +5,7 @@ class EmailService {
 
   public static async sendEmailForOTP(email: string, otp: string) {
     const response = await this.resend.emails.send({
-      from: "Filloutly <onboarding@resend.dev>",
+      from: "Filloutly <noreply@filloutly.in>",
       to: email,
 
       subject: "Verify your Filloutly account",

@@ -2,6 +2,7 @@ import { emailVerificationTable } from "@repo/database/models/email-verification
 import { usersTable } from "@repo/database/models/user";
 import crypto from "node:crypto";
 import { db, eq } from "../../database/index";
+import EmailService from "../utils/email.utils";
 import JwtUtils from "../utils/jwt.utils";
 import {
   createUserWithEmailPasswordInput,
@@ -120,7 +121,7 @@ class UserService {
   private async sendOtpEmail(email: string) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const emailVerificationData = await this.updateOtpForEmail(email, otp);
-    // await EmailService.sendEmailForOTP(email, otp);
+    await EmailService.sendEmailForOTP(email, otp);
     return emailVerificationData.id;
   }
   public async signUserWithEmailPassword(payload: SignUserWithEmailPasswordInput) {
