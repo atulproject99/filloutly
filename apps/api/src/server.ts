@@ -8,17 +8,22 @@ import { createOpenApiExpressMiddleware, generateOpenApiDocument } from "trpc-to
 import { createContext, serverRouter } from "@repo/trpc/server";
 
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { env } from "./env";
+
 export const app = express();
+
 const openApiDocument = generateOpenApiDocument(serverRouter, {
   title: "Streamyst OpenAPI",
   version: "1.0.0",
   baseUrl: env.BASE_URL.concat("/api"),
 });
+
 app.set("trust proxy", 1);
 
+// Helmet first — security headers, but allow CORS headers through
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
@@ -27,34 +32,42 @@ app.use(
   }),
 );
 
+// CORS — must come before routes
 const allowedOrigins = [
   "http://localhost:3000",
   "https://filloutly.in",
   "https://www.filloutly.in",
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. curl, mobile apps, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
+    maxAge: 86400, // cache preflight for 24h
+  }),
+);
 
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-  );
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Vary", "Origin");
-
-  if (req.method === "OPTIONS") {
-    res.status(204).end();
-    return;
-  }
-
-  next();
-});
+// Handle OPTIONS preflight explicitly so it short-circuits before other middleware
+app.options("*", cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
+  maxAge: 86400,
+}));
 
 app.use(express.json());
 app.use(cookieParser());
