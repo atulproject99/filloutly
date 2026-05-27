@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { Users, FileStack, Database, CreditCard } from "lucide-react";
 import { MissionControlStat } from "~/components/admin/mission-control-stats";
-import { LiveActivityChart } from "~/components/admin/live-activity-chart";
 import { trpc } from "~/trpc/client";
 import { Loader2 } from "lucide-react";
 
@@ -31,18 +30,7 @@ export default function AdminOverviewPage() {
           </motion.p>
         </div>
         
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex items-center space-x-3 bg-red-950/20 border border-red-500/20 px-4 py-2 rounded-xl"
-        >
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-          </span>
-          <span className="text-sm font-mono text-white/70">LIVE MONITORING ACTIVE</span>
-        </motion.div>
+
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -88,10 +76,7 @@ export default function AdminOverviewPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mt-6">
-        <LiveActivityChart />
-        {/* Placeholder for smaller widget next to the chart on very wide screens, or chart spans full on smaller */}
-      </div>
+
     </div>
   );
 }

@@ -8,14 +8,7 @@ import {
   Activity,
   Users,
   FileText,
-  BarChart,
-  FileBarChart,
   Palette,
-  ShieldAlert,
-  Server,
-  CreditCard,
-  Terminal,
-  Settings,
   ChevronLeft,
   ChevronRight,
   X,
@@ -27,11 +20,7 @@ const adminMenus = [
   { name: "Platform Overview", href: "/admin", icon: Activity },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Forms", href: "/admin/forms", icon: FileText },
-  { name: "Analytics", href: "/admin/analytics", icon: BarChart },
-  { name: "Reports", href: "/admin/reports", icon: FileBarChart },
   { name: "Themes", href: "/admin/themes", icon: Palette },
-  { name: "API Monitoring", href: "/admin/api", icon: Server },
-  { name: "System Logs", href: "/admin/logs", icon: Terminal },
 ];
 
 interface AdminSidebarProps {

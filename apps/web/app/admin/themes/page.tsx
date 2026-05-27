@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Palette, CheckCircle, XCircle, Power, Edit3 } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { toast } from "sonner";
 
 const themes = [
   { id: "apple-glass", name: "Apple Glass", active: true, usage: 41920, style: "bg-white/10 border-white/20" },
@@ -24,7 +25,10 @@ export default function AdminThemesPage() {
         >
           Global Themes Configuration
         </motion.h1>
-        <Button className="bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] hover:shadow-[0_0_30px_rgba(220,38,38,0.5)] transition-all">
+        <Button 
+          className="bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] hover:shadow-[0_0_30px_rgba(220,38,38,0.5)] transition-all"
+          onClick={() => toast.info("Coming soon...")}
+        >
           <Palette className="w-4 h-4 mr-2" />
           Create Theme
         </Button>

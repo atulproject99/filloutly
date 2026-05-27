@@ -55,7 +55,7 @@ export const authRouter = router({
     .input(signUserWithEmailPasswordInputType)
     .output(signUserWithEmailPasswordOutputType)
     .mutation(async ({ input, ctx }) => {
-      const { message, isVerified, token, refreshToken, email, id } =
+      const { message, isVerified, token, refreshToken, email, id, role } =
         await userService.signUserWithEmailPassword(input);
       if (token) {
         setAuthenticationCookie(ctx, token);
@@ -63,7 +63,7 @@ export const authRouter = router({
       if (refreshToken) {
         setRefreshTokenCookie(ctx, refreshToken);
       }
-      return { message, isVerified, token, email, id };
+      return { message, isVerified, token, email, id, role };
     }),
 
   verifyEmail: publicProcedure

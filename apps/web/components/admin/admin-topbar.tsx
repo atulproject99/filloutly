@@ -1,13 +1,32 @@
 "use client";
 
-import { Bell, Search, ShieldCheck, Menu, Terminal } from "lucide-react";
+import { ShieldCheck, Menu, LogOut, Loader2, User } from "lucide-react";
 import { cn } from "~/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { trpc } from "~/trpc/client";
 
 interface AdminTopbarProps {
   setMobileMenuOpen: (open: boolean) => void;
 }
 
 export function AdminTopbar({ setMobileMenuOpen }: AdminTopbarProps) {
+  const utils = trpc.useUtils();
+  const { data: user, isLoading } = trpc.auth.getUserInfo.useQuery();
+
+  const signOut = trpc.auth.signOut.useMutation({
+    onSuccess: () => {
+      utils.auth.getUserInfo.reset();
+      window.location.href = "/";
+    },
+  });
+
   return (
     <header className={cn(
       "h-16 lg:mt-4 lg:mr-4 lg:rounded-3xl shrink-0 flex items-center justify-between px-4 lg:px-6",
@@ -30,22 +49,39 @@ export function AdminTopbar({ setMobileMenuOpen }: AdminTopbarProps) {
       <div className="flex-1" />
       
       <div className="flex items-center space-x-2 lg:space-x-4">
-        <button className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-black border border-white/10 hover:border-red-500/30 rounded-xl text-white/50 hover:text-white transition-colors group">
-          <Search className="w-4 h-4 group-hover:text-red-400" />
-          <span className="text-sm font-mono">Search logs...</span>
-          <kbd className="hidden lg:inline-flex items-center gap-1 px-1.5 font-mono text-[10px] text-white/40 bg-white/5 rounded ml-4">
-            <span className="text-xs">⌘</span>K
-          </kbd>
-        </button>
-
-        <button className="relative p-2 text-white/60 hover:text-red-400 transition-colors rounded-xl hover:bg-white/5">
-          <Terminal className="w-5 h-5" />
-        </button>
-
-        <button className="relative p-2 text-white/60 hover:text-red-400 transition-colors rounded-xl hover:bg-white/5">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-800 text-white font-medium text-sm overflow-hidden border border-white/10 ml-2 hover:ring-2 hover:ring-red-500/50 transition-all">
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : user?.profileImageUrl ? (
+                <img
+                  src={user.profileImageUrl}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-4 h-4" />
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 glass-panel border-white/10 text-white">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user?.fullName || "Admin"}</p>
+                <p className="text-xs leading-none text-white/50">{user?.email || "Loading..."}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-white/10" />
+            <DropdownMenuItem
+              className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
+              onClick={() => signOut.mutate()}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

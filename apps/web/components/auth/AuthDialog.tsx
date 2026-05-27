@@ -25,13 +25,13 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "~/components/ui/input-otp";
+import useResendEmail from "~/hooks/useResendEmail";
 import useSignIn from "~/hooks/useSignIn";
 import useSignUp from "~/hooks/useSignUp";
 import useVerifyEmail from "~/hooks/useVerifyEmail";
-import useResendEmail from "~/hooks/useResendEmail";
 
-const successToastStyle = { style: { background: '#16a34a', color: '#fff', border: 'none' } };
-const errorToastStyle = { style: { background: '#dc2626', color: '#fff', border: 'none' } };
+const successToastStyle = { style: { background: "#16a34a", color: "#fff", border: "none" } };
+const errorToastStyle = { style: { background: "#dc2626", color: "#fff", border: "none" } };
 
 // Schemas
 const loginSchema = z.object({
@@ -63,25 +63,16 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
   const [countdown, setCountdown] = useState(30);
   const router = useRouter();
 
-  const {
-    signInUserWithEmailPasswordAsync,
-    isLoading: isLoadingForSignIn,
-  } = useSignIn();
+  const { signInUserWithEmailPasswordAsync, isLoading: isLoadingForSignIn } = useSignIn();
 
   const {
     createUserWithEmailPasswordAsync: signUpUserWithEmailPasswordAsync,
     isLoading: isLoadingForSignUp,
   } = useSignUp();
 
-  const {
-    verifyEmailAsync,
-    isLoading: isLoadingForVerify,
-  } = useVerifyEmail();
+  const { verifyEmailAsync, isLoading: isLoadingForVerify } = useVerifyEmail();
 
-  const {
-    resendEmailAsync,
-    isLoading: isLoadingForResend,
-  } = useResendEmail();
+  const { resendEmailAsync, isLoading: isLoadingForResend } = useResendEmail();
 
   // Reset view when dialog opens
   useEffect(() => {
@@ -129,6 +120,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
           setView("otp");
         } else {
           onOpenChange(false);
+          console.log(response.role);
           router.push(response.role === "admin" ? "/admin" : "/dashboard");
         }
       }
