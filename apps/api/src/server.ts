@@ -20,14 +20,24 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 });
 app.set("trust proxy", 1);
 
-const corsOptions = {
-  origin: ["http://localhost:3000", "https://filloutly.in", "https://www.filloutly.in"],
-  credentials: true,
-};
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://filloutly.in",
+  "https://www.filloutly.in",
+];
 
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
-app.options("*", cors(corsOptions));
+app.options("*", (req, res) => {
+  res.sendStatus(200);
+});
 app.use(express.json());
 
 app.use(cookieParser());
@@ -35,6 +45,7 @@ app.use(cookieParser());
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
   }),
 );
 
