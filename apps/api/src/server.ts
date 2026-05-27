@@ -19,16 +19,15 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
   baseUrl: env.BASE_URL.concat("/api"),
 });
 app.set("trust proxy", 1);
-app.use(
-  cors({
-    origin: ["http://localhost:3000", "https://filloutly.in", "https://www.filloutly.in"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
 
-app.options("*", cors());
+const corsOptions = {
+  origin: ["http://localhost:3000", "https://filloutly.in", "https://www.filloutly.in"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+app.options("*", cors(corsOptions));
 app.use(express.json());
 
 app.use(cookieParser());
