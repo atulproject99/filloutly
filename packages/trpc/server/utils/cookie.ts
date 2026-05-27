@@ -10,7 +10,7 @@ const defaultCookieOption: CookieOptions = {
   path: "/",
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  sameSite: "none",
   maxAge: ONE_YEAR,
 };
 
@@ -35,14 +35,13 @@ export function deleteCookieFactory(res: Response) {
       path: "/",
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none",
     });
   };
 }
 const AUTHENTICATION_KEY = "authentication-token";
 const REFRESH_TOKEN_KEY = "refresh-token";
 
-// ── Access Token Cookie ────────────────────────────────────────────────────────
 export function setAuthenticationCookie(ctx: TRPCContext, accessToken: string) {
   ctx.createCookie(AUTHENTICATION_KEY, accessToken);
 }
@@ -61,7 +60,7 @@ export function setRefreshTokenCookie(ctx: TRPCContext, refreshToken: string) {
     path: "/",
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "none",
     maxAge: SEVEN_DAYS,
   });
 }
