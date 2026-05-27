@@ -1,12 +1,13 @@
-import type { CookieOptions, Request, Response } from "express";
-import { TRPCContext } from "../context";
+import type * as express from "express";
+import type { TRPCContext } from "../context";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
 const ONE_DAY = 24 * ONE_HOUR;
 const ONE_MONTH = 30 * ONE_DAY;
 const ONE_YEAR = 12 * ONE_MONTH;
-const defaultCookieOption: CookieOptions = {
+
+const defaultCookieOption: express.CookieOptions = {
   path: "/",
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
@@ -14,22 +15,23 @@ const defaultCookieOption: CookieOptions = {
   maxAge: ONE_YEAR,
 };
 
-export function createCookieFactory(res: Response) {
+export function createCookieFactory(res: express.Response) {
   return function createCookie(
     name: string,
     value: string,
-    opts: CookieOptions = defaultCookieOption,
+    opts: express.CookieOptions = defaultCookieOption,
   ) {
     res.cookie(name, value, opts);
   };
 }
-export function getCookieFactory(req: Request) {
+
+export function getCookieFactory(req: express.Request) {
   return function getCookie(name: string) {
     return req.cookies?.[name];
   };
 }
 
-export function deleteCookieFactory(res: Response) {
+export function deleteCookieFactory(res: express.Response) {
   return function deleteCookie(name: string) {
     res.clearCookie(name, {
       path: "/",
@@ -39,20 +41,22 @@ export function deleteCookieFactory(res: Response) {
     });
   };
 }
+
 const AUTHENTICATION_KEY = "authentication-token";
 const REFRESH_TOKEN_KEY = "refresh-token";
 
 export function setAuthenticationCookie(ctx: TRPCContext, accessToken: string) {
   ctx.createCookie(AUTHENTICATION_KEY, accessToken);
 }
+
 export function getAuthenticationCookkie(ctx: TRPCContext) {
   return ctx.getCookie(AUTHENTICATION_KEY);
 }
+
 export function deleteAuthenticationCookie(ctx: TRPCContext) {
   ctx.deleteCookie(AUTHENTICATION_KEY);
 }
 
-// ── Refresh Token Cookie (7 days) ──────────────────────────────────────────────
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
 export function setRefreshTokenCookie(ctx: TRPCContext, refreshToken: string) {
@@ -64,9 +68,11 @@ export function setRefreshTokenCookie(ctx: TRPCContext, refreshToken: string) {
     maxAge: SEVEN_DAYS,
   });
 }
+
 export function getRefreshTokenCookie(ctx: TRPCContext) {
   return ctx.getCookie(REFRESH_TOKEN_KEY);
 }
+
 export function deleteRefreshTokenCookie(ctx: TRPCContext) {
   ctx.deleteCookie(REFRESH_TOKEN_KEY);
 }
