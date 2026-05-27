@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Bell, Loader2, LogOut, Menu, Search, User } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -10,6 +11,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 import { cn } from "~/lib/utils";
 import { trpc } from "~/trpc/client";
 
@@ -21,6 +32,7 @@ export function Topbar({ setMobileMenuOpen }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const utils = trpc.useUtils();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const { data: user, isLoading } = trpc.auth.getUserInfo.useQuery();
 
   let activeTitle = "Dashboard";
@@ -102,7 +114,10 @@ export function Topbar({ setMobileMenuOpen }: TopbarProps) {
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem
               className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
-              onClick={() => signOut.mutate()}
+              onSelect={(e) => {
+                e.preventDefault();
+                setShowLogoutDialog(true);
+              }}
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
@@ -110,6 +125,31 @@ export function Topbar({ setMobileMenuOpen }: TopbarProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent className="bg-[#0a0a0a] border border-white/10 text-white glass-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-400">
+              You will be securely logged out and returned to the main screen. You'll need to authenticate again to access this dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-white/10 text-white hover:bg-white/5">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                signOut.mutate();
+              }}
+              disabled={signOut.isPending}
+              className="bg-red-600 hover:bg-red-500 text-white"
+            >
+              {signOut.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Log out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 }

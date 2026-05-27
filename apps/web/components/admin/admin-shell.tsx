@@ -11,6 +11,7 @@ import { trpc } from "~/trpc/client";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const utils = trpc.useUtils();
   const [user, error, isLoading, isError] = useUser();
@@ -23,10 +24,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (!isLoading && (isError || !user)) {
       router.push("/");
     }
   }, [isLoading, isError, user, router]);
+
+  if (!isMounted) {
+    return null;
+  }
 
   if (isLoading) {
     return (

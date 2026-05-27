@@ -89,23 +89,6 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
 
   const { resetPasswordAsync, isLoading: isLoadingForReset } = useResetPassword();
 
-  // Reset view when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      setView(initialView);
-      setCountdown(30);
-    }
-  }, [isOpen, initialView]);
-
-  // Timer for OTP resend
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (view === "otp" && countdown > 0) {
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [view, countdown]);
-
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
@@ -130,6 +113,33 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { pin: "", newPassword: "" },
   });
+
+  // Reset view when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setView(initialView);
+      setCountdown(30);
+    }
+  }, [isOpen, initialView]);
+
+  // Reset forms when dialog opens or view changes
+  useEffect(() => {
+    loginForm.reset();
+    registerForm.reset();
+    otpForm.reset();
+    forgotPasswordForm.reset();
+    resetPasswordForm.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, isOpen]);
+
+  // Timer for OTP resend
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (view === "otp" && countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [view, countdown]);
 
   const onLoginSubmit = async (_values: z.infer<typeof loginSchema>) => {
     try {
@@ -238,7 +248,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-[#0a0a0a] border border-white/10 text-white shadow-2xl glass-card">
+      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="sm:max-w-[425px] bg-[#0a0a0a] border border-white/10 text-white shadow-2xl glass-card">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(220,38,38,0.15)_0%,transparent_70%)] pointer-events-none" />
 
         <DialogHeader className="relative z-10">
@@ -275,7 +285,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                         <Input
                           placeholder="you@example.com"
                           {...field}
-                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
                         />
                       </FormControl>
                       <FormMessage className="text-red-400" />
@@ -293,7 +303,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                           type="password"
                           placeholder="••••••••"
                           {...field}
-                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
                         />
                       </FormControl>
                       <FormMessage className="text-red-400" />
@@ -343,7 +353,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                         <Input
                           placeholder="John Doe"
                           {...field}
-                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
                         />
                       </FormControl>
                       <FormMessage className="text-red-400" />
@@ -360,7 +370,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                         <Input
                           placeholder="you@example.com"
                           {...field}
-                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
                         />
                       </FormControl>
                       <FormMessage className="text-red-400" />
@@ -378,7 +388,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                           type="password"
                           placeholder="••••••••"
                           {...field}
-                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
                         />
                       </FormControl>
                       <FormMessage className="text-red-400" />
@@ -426,27 +436,27 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                           <InputOTPGroup className="gap-2">
                             <InputOTPSlot
                               index={0}
-                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500"
                             />
                             <InputOTPSlot
                               index={1}
-                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500"
                             />
                             <InputOTPSlot
                               index={2}
-                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500"
                             />
                             <InputOTPSlot
                               index={3}
-                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500"
                             />
                             <InputOTPSlot
                               index={4}
-                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500"
                             />
                             <InputOTPSlot
                               index={5}
-                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md"
+                              className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500"
                             />
                           </InputOTPGroup>
                         </InputOTP>
@@ -497,7 +507,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                         <Input
                           placeholder="you@example.com"
                           {...field}
-                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
                         />
                       </FormControl>
                       <FormMessage className="text-red-400" />
@@ -537,12 +547,12 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                       <FormControl>
                         <InputOTP maxLength={6} {...field} className="gap-2">
                           <InputOTPGroup className="gap-2">
-                            <InputOTPSlot index={0} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={1} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={2} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={3} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={4} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
-                            <InputOTPSlot index={5} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md" />
+                            <InputOTPSlot index={0} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500" />
+                            <InputOTPSlot index={1} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500" />
+                            <InputOTPSlot index={2} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500" />
+                            <InputOTPSlot index={3} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500" />
+                            <InputOTPSlot index={4} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500" />
+                            <InputOTPSlot index={5} className="w-12 h-14 bg-white/5 border-white/10 text-white text-lg rounded-md data-[active=true]:ring-1 data-[active=true]:ring-red-500 data-[active=true]:border-red-500" />
                           </InputOTPGroup>
                         </InputOTP>
                       </FormControl>
@@ -562,7 +572,7 @@ export function AuthDialog({ isOpen, onOpenChange, initialView = "login" }: Auth
                           type="password"
                           placeholder="••••••••"
                           {...field}
-                          className="bg-white/5 border-white/10 text-white focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
+                          className="bg-white/5 border-white/10 text-white focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:border-red-500 h-11"
                         />
                       </FormControl>
                       <FormMessage className="text-red-400" />

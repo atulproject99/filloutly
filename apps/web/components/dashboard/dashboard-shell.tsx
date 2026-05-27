@@ -8,14 +8,23 @@ import useUser from "~/hooks/useUser";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const [user, error, isLoading, isError] = useUser();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && (isError || !user)) {
       router.push("/");
     }
   }, [isLoading, isError, user, router]);
+
+  if (!isMounted) {
+    return null;
+  }
 
   if (isLoading) {
     return (

@@ -24,7 +24,10 @@ export const adminRouter = router({
     })
     .output(getPlatformStatsOutputType)
     .query(async () => {
-      const [usersCount] = await db.select({ value: count() }).from(usersTable);
+      const [usersCount] = await db
+        .select({ value: count() })
+        .from(usersTable)
+        .where(ne(usersTable.role, "admin"));
       const [formsCount] = await db.select({ value: count() }).from(formsTable);
       const [responsesCount] = await db.select({ value: count() }).from(responsesTable);
 

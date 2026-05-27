@@ -21,7 +21,7 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://filloutly.in", "https://www.filloutly.in"],
     credentials: true,
   }),
 );
