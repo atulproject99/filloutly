@@ -57,7 +57,7 @@ app.use(
 );
 
 // Handle OPTIONS preflight explicitly so it short-circuits before other middleware
-app.options("*", cors({
+app.options("/(.*)", cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
