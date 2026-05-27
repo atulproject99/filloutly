@@ -99,6 +99,13 @@ app.use(
 
 app.use(
   "/trpc",
+  (req, res, next) => {
+    // Fix TRPC Parse Error (Unexpected end of JSON input) on empty body mutations
+    if (req.method === "POST" && !req.body) {
+      req.body = {};
+    }
+    next();
+  },
   trpcExpress.createExpressMiddleware({
     router: serverRouter,
     createContext,
