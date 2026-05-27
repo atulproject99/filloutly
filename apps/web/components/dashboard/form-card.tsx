@@ -1,10 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MoreHorizontal, Play, Share2, BarChart2, Edit3 } from "lucide-react";
+import { Play, Share2, BarChart2, Edit3 } from "lucide-react";
 import { cn } from "~/lib/utils";
+import Link from "next/link";
+import { toast } from "sonner";
 
 interface FormCardProps {
+  id: string;
+  slug?: string | null;
   title: string;
   theme: string;
   responses: number;
@@ -12,8 +16,19 @@ interface FormCardProps {
   delay?: number;
 }
 
-export function FormCard({ title, theme, responses, status, delay = 0 }: FormCardProps) {
+export function FormCard({ id, slug, title, theme, responses, status, delay = 0 }: FormCardProps) {
   const isPublished = status === "Published";
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!slug) {
+      toast.error("Form doesn't have a public link yet. Publish it first.");
+      return;
+    }
+    const url = `${window.location.origin}/f/${slug}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard!");
+  };
 
   return (
     <motion.div
@@ -38,10 +53,7 @@ export function FormCard({ title, theme, responses, status, delay = 0 }: FormCar
 
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold text-lg text-white group-hover:text-red-100 transition-colors">{title}</h3>
-          <button className="p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors opacity-0 group-hover:opacity-100">
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
+          <h3 className="font-semibold text-lg text-white group-hover:text-red-100 transition-colors line-clamp-1">{title}</h3>
         </div>
         
         <div className="flex items-center space-x-2 mb-6">
@@ -63,15 +75,15 @@ export function FormCard({ title, theme, responses, status, delay = 0 }: FormCar
           </div>
 
           <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
-            <button className="p-2 text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors tooltip-trigger" title="Analytics">
+            <Link href={`/dashboard/forms/${id}/responses`} className="p-2 text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors tooltip-trigger" title="Analytics">
               <BarChart2 className="w-4 h-4" />
-            </button>
-            <button className="p-2 text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors" title="Share">
+            </Link>
+            <button onClick={handleShare} className="p-2 text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors" title="Share">
               <Share2 className="w-4 h-4" />
             </button>
-            <button className="p-2 text-white hover:text-white bg-red-600/80 hover:bg-red-500 rounded-xl transition-colors shadow-lg shadow-red-500/20" title="Edit">
+            <Link href={`/dashboard/forms/${id}/builder`} className="p-2 text-white hover:text-white bg-red-600/80 hover:bg-red-500 rounded-xl transition-colors shadow-lg shadow-red-500/20" title="Edit">
               <Edit3 className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
         </div>
       </div>

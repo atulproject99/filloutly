@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import type { ReactNode } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import useFormBuilder from "~/hooks/useFormBuilder";
 import { trpc } from "~/trpc/client";
 import { toast } from "sonner";
@@ -610,6 +610,7 @@ function OptionsEditor({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function FormBuilderPage() {
   const params = useParams();
+  const router = useRouter();
   const formId = params.id as string;
 
   const { data: form, isLoading } = trpc.form.getFormById.useQuery({ id: formId });
@@ -806,10 +807,8 @@ export default function FormBuilderPage() {
       {/* ── Header ── */}
       <header className="flex items-center justify-between px-5 py-3 border-b border-white/8 bg-black/60 backdrop-blur-xl z-10 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild className="hover:bg-white/8 h-8 w-8">
-            <Link href="/dashboard/forms">
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="hover:bg-white/8 h-8 w-8">
+            <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="w-px h-5 bg-white/10" />
           <div>

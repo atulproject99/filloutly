@@ -73,7 +73,16 @@ export function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
 
       <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
         {menus.map((menu) => {
-          const isActive = pathname === menu.href;
+          let isActive = false;
+          if (menu.href === "/dashboard") {
+            isActive = pathname === "/dashboard";
+          } else if (menu.name === "Responses") {
+            isActive = pathname.startsWith("/dashboard/responses") || pathname.includes("/responses");
+          } else if (menu.name === "My Forms") {
+            isActive = pathname.startsWith("/dashboard/forms") && !pathname.includes("/responses");
+          } else {
+            isActive = pathname.startsWith(menu.href);
+          }
 
           return (
             <Link
@@ -82,9 +91,9 @@ export function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
               onClick={(e) => {
                 if (menu.name === "My Forms") {
                   utils.form.getForms.invalidate();
-                }
-                if (isActive) {
-                  // Optional: also invalidate other active routes if clicked
+                } else if (menu.name === "Responses") {
+                  utils.form.getForms.invalidate();
+                  utils.form.getResponses.invalidate();
                 }
               }}
               className={cn(
@@ -128,7 +137,7 @@ export function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
         animate={{ width: isCollapsed ? 80 : 260 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "relative hidden lg:flex flex-col h-[calc(100vh-2rem)] my-4 ml-4 rounded-3xl",
+          "relative hidden lg:flex flex-col h-full rounded-3xl",
           "glass-panel border-l-red-500/20 z-50 overflow-hidden shrink-0"
         )}
       >

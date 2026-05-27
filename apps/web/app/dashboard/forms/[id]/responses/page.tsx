@@ -1,20 +1,21 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { trpc } from "~/trpc/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";
-import { Download } from "lucide-react";
+import { Download, RefreshCw } from "lucide-react";
 
 export default function FormResponsesPage() {
   const params = useParams();
+  const router = useRouter();
   const formId = params.id as string;
 
   const { data: form, isLoading: isFormLoading } = trpc.form.getFormById.useQuery({ id: formId });
-  const { data: responses, isLoading: isResponsesLoading } = trpc.form.getResponses.useQuery({ formId });
+  const { data: responses, isLoading: isResponsesLoading, refetch: refetchResponses, isRefetching: isRefetchingResponses } = trpc.form.getResponses.useQuery({ formId });
 
   if (isFormLoading || isResponsesLoading) {
     return (
@@ -69,10 +70,8 @@ export default function FormResponsesPage() {
       {/* ── Header ── */}
       <header className="flex items-center justify-between px-5 py-3 border-b border-white/8 bg-black/60 backdrop-blur-xl z-10 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild className="hover:bg-white/8 h-8 w-8">
-            <Link href={`/dashboard/forms/${formId}/builder`}>
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="hover:bg-white/8 h-8 w-8">
+            <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="w-px h-5 bg-white/10" />
           <div>
@@ -87,16 +86,28 @@ export default function FormResponsesPage() {
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Submissions ({responses?.length || 0})</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportCSV}
-              disabled={!responses || responses.length === 0}
-              className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export CSV
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchResponses()}
+                disabled={isRefetchingResponses}
+                className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRefetchingResponses ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                disabled={!responses || responses.length === 0}
+                className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export CSV
+              </Button>
+            </div>
           </div>
 
           <div className="border border-white/10 rounded-lg overflow-hidden bg-white/[0.02]">

@@ -1,9 +1,7 @@
 "use client";
 
-import { Bell, Search, User, Menu, LogOut, Loader2 } from "lucide-react";
-import { cn } from "~/lib/utils";
-import { trpc } from "~/trpc/client";
-import { useRouter } from "next/navigation";
+import { Bell, Loader2, LogOut, Menu, Search, User } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { cn } from "~/lib/utils";
+import { trpc } from "~/trpc/client";
 
 interface TopbarProps {
   setMobileMenuOpen: (open: boolean) => void;
@@ -19,34 +19,55 @@ interface TopbarProps {
 
 export function Topbar({ setMobileMenuOpen }: TopbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const utils = trpc.useUtils();
   const { data: user, isLoading } = trpc.auth.getUserInfo.useQuery();
-  const logout = trpc.auth.logout.useMutation({
+
+  let activeTitle = "Dashboard";
+  if (pathname.includes("/responses")) {
+    activeTitle = "Responses";
+  } else if (pathname.startsWith("/dashboard/forms")) {
+    activeTitle = "My Forms";
+  } else if (pathname.startsWith("/dashboard/templates")) {
+    activeTitle = "Templates";
+  } else if (pathname.startsWith("/dashboard/themes")) {
+    activeTitle = "Themes";
+  }
+  const signOut = trpc.auth.signOut.useMutation({
     onSuccess: () => {
       utils.auth.getUserInfo.reset();
+
       window.location.href = "/";
     },
   });
 
   return (
-    <header className={cn(
-      "h-16 lg:mt-4 lg:mr-4 lg:rounded-3xl shrink-0 flex items-center justify-between px-4 lg:px-6",
-      "glass-panel border-b-white/5 border-b lg:border-b-0 rounded-none z-30"
-    )}>
+    <header
+      className={cn(
+        "h-16 rounded-2xl sm:rounded-3xl shrink-0 flex items-center justify-between px-4 lg:px-6",
+        "glass-panel border-white/5 border z-30",
+      )}
+    >
       <div className="flex items-center">
-        <button 
+        <button
           className="lg:hidden p-2 -ml-2 mr-2 text-white/60 hover:text-white transition-colors rounded-xl hover:bg-white/5"
           onClick={() => setMobileMenuOpen(true)}
         >
           <Menu className="w-6 h-6" />
         </button>
-        <span className="lg:hidden font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-red-800 text-lg">
-          Filloutly
-        </span>
+        <div className="flex items-center space-x-3">
+          <span className="lg:hidden font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-red-800 text-lg">
+            Filloutly
+          </span>
+          <div className="lg:hidden w-px h-4 bg-white/20" />
+          <h1 className="text-lg font-semibold tracking-tight text-white/90">
+            {activeTitle}
+          </h1>
+        </div>
       </div>
-      
+
       <div className="flex-1" />
-      
+
       <div className="flex items-center space-x-2 lg:space-x-4">
         <button className="hidden sm:block p-2 text-white/60 hover:text-white transition-colors rounded-xl hover:bg-white/5">
           <Search className="w-5 h-5" />
@@ -61,7 +82,11 @@ export function Topbar({ setMobileMenuOpen }: TopbarProps) {
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : user?.profileImageUrl ? (
-                <img src={user.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                <img
+                  src={user.profileImageUrl}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <User className="w-4 h-4" />
               )}
@@ -75,9 +100,9 @@ export function Topbar({ setMobileMenuOpen }: TopbarProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
-              onClick={() => logout.mutate()}
+              onClick={() => signOut.mutate()}
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
